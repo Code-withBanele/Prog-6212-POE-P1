@@ -2,7 +2,7 @@
 -- Course: PROG6212 - Programming 2B | PoE Part 1
 -- File: docs/RaceDay_Database.sql
 -- Description: SQL script for the RaceDay database and seed data.
--- ============================================================================
+-- ===========================================================================+
 
 USE master;
 GO
