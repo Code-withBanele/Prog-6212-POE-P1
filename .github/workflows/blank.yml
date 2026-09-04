@@ -22,6 +22,7 @@ jobs:
           required_files=(
             "README.md"
             "DOCS/ERD DRAFT 1.png"
+            "DOCS/ERD DRAFT 2.png"
             "DOCS/RaceDay API Endpoint Plan.pdf"
             "DOCS/raceday.sql"
           )
