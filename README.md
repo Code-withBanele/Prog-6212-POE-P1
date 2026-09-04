@@ -7,4 +7,5 @@
 -- ERD 
 -- API Endpoint Plan
 -- SQL Database Script
-
+## Repository Structure 
+All files for part one mentioned above are stored in the /Docs folder. 
