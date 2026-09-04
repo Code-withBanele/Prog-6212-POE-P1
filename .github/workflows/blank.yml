@@ -23,7 +23,7 @@ jobs:
             "README.md"
             "DOCS/ERD DRAFT 1.png"
             "DOCS/RaceDay API Endpoint Plan.pdf"
-            "DOCS/raceday sql scrpt"
+            "DOCS/raceday.sql"
           )
 
           echo "Checking required RaceDay Part 1 submission files..."
