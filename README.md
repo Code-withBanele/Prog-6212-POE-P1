@@ -1,2 +1,6 @@
 # Prog-6212-POE-P1
-Submission repository for Prog 6212 POE
+# RaceDay Event Management System
+## Project Description Briefly explain RaceDay and the problem it solves.
+## User Roles ### Organiser Explain Organiser functionality. 
+### Participant Explain Participant functionality.
+
