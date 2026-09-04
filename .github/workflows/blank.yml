@@ -1,26 +1,55 @@
-
-name: .NET
+name: Submission Validation
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["main"]
 
 jobs:
-  build:
-
+  validate-submission:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0x
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate required submission files
+        shell: bash
+        run: |
+          set -e
+
+          required_files=(
+            "README.md"
+            "DOCS/ERD DRAFT 1.png"
+            "DOCS/RaceDay API Endpoint Plan.pdf"
+            "DOCS/raceday sql scrpt"
+          )
+
+          echo "Checking required RaceDay Part 1 submission files..."
+
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "ERROR: Required file is missing: $file"
+              exit 1
+            fi
+
+            if [ ! -s "$file" ]; then
+              echo "ERROR: Required file is empty: $file"
+              exit 1
+            fi
+
+            echo "OK: $file"
+          done
+
+          echo "All required submission files are present and non-empty."
+
+      - name: Validate documentation folder
+        shell: bash
+        run: |
+          if [ ! -d "DOCS" ]; then
+            echo "ERROR: DOCS folder is missing."
+            exit 1
+          fi
+
+          echo "OK: DOCS folder exists."
