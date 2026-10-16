@@ -78,5 +78,9 @@ public class RaceDayContext : DbContext
             .WithMany()
             .HasForeignKey(r => r.CategoriesId)
             .OnDelete(DeleteBehavior.Restrict);
+
+     modelBuilder.Entity<Event>()
+    .Property(e => e.DistanceKm)
+    .HasPrecision(8, 2);
     }
 }
