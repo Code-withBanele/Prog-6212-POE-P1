@@ -1,4 +1,4 @@
-﻿
+﻿using Route = RaceDay.Models.Route;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.Models;
 
