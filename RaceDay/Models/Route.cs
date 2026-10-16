@@ -28,9 +28,6 @@ public class Route
     [MaxLength(255)]
     public string Description { get; set; } = string.Empty;
 
-    [Required]
-    [MaxLength(50)]
-    public string WorkspaceId { get; set; } = string.Empty;
 
     public ICollection<Event> Events { get; set; } = new List<Event>();
 }
