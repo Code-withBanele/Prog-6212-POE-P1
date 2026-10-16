@@ -77,7 +77,7 @@ namespace RaceDay.Migrations
                     Description = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
                     EventDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Location = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    DistanceKm = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DistanceKm = table.Column<decimal>(type: "decimal(8,2)", precision: 8, scale: 2, nullable: false),
                     EventType = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     CategoriesId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     RouteId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),

@@ -12,7 +12,7 @@ using RaceDay.Data;
 namespace RaceDay.Migrations
 {
     [DbContext(typeof(RaceDayContext))]
-    [Migration("20261016194741_InitialCreate")]
+    [Migration("20261016195712_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -63,7 +63,8 @@ namespace RaceDay.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("DistanceKm")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
 
                     b.Property<DateTime>("EventDate")
                         .HasColumnType("datetime2");

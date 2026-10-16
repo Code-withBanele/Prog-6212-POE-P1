@@ -60,7 +60,8 @@ namespace RaceDay.Migrations
                         .HasColumnType("nvarchar(255)");
 
                     b.Property<decimal>("DistanceKm")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
 
                     b.Property<DateTime>("EventDate")
                         .HasColumnType("datetime2");
