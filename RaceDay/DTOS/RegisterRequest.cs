@@ -34,6 +34,6 @@ public class RegisterRequest
     public string Gender { get; set; } = "O";
 
     [Range(1, 120)]
-    public int Age { get; set; }
+    public int? Age { get; set; }
 }
 
