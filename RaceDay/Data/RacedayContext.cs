@@ -5,7 +5,9 @@ using RaceDay.Models;
 namespace RaceDay.Data;
 
 public class RaceDayContext : DbContext
+
 {
+    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
     public RaceDayContext(DbContextOptions<RaceDayContext> options)
         : base(options)
     {
@@ -82,5 +84,41 @@ public class RaceDayContext : DbContext
      modelBuilder.Entity<Event>()
     .Property(e => e.DistanceKm)
     .HasPrecision(8, 2);
+
+        modelBuilder.Entity<UserAccount>()
+    .ToTable("UserAccounts");
+
+        modelBuilder.Entity<UserAccount>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+
+        modelBuilder.Entity<UserAccount>()
+            .Property(u => u.Email)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        modelBuilder.Entity<UserAccount>()
+            .HasOne(u => u.Organiser)
+            .WithMany()
+            .HasForeignKey(u => u.OrganisersId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserAccount>()
+            .HasOne(u => u.Participant)
+            .WithMany()
+            .HasForeignKey(u => u.ParticipantsId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<UserAccount>()
+            .HasIndex(u => u.OrganisersId)
+            .IsUnique()
+            .HasFilter("[OrganisersId] IS NOT NULL");
+
+        modelBuilder.Entity<UserAccount>()
+            .HasIndex(u => u.ParticipantsId)
+            .IsUnique()
+            .HasFilter("[ParticipantsId] IS NOT NULL");
     }
+
+
 }
