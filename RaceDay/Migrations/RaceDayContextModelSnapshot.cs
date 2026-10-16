@@ -231,6 +231,50 @@ namespace RaceDay.Migrations
                     b.ToTable("Route", (string)null);
                 });
 
+            modelBuilder.Entity("RaceDay.Models.UserAccount", b =>
+                {
+                    b.Property<string>("UserAccountId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("OrganisersId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ParticipantsId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("UserAccountId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("OrganisersId")
+                        .IsUnique()
+                        .HasFilter("[OrganisersId] IS NOT NULL");
+
+                    b.HasIndex("ParticipantsId")
+                        .IsUnique()
+                        .HasFilter("[ParticipantsId] IS NOT NULL");
+
+                    b.ToTable("UserAccounts", (string)null);
+                });
+
             modelBuilder.Entity("RaceDay.Models.Event", b =>
                 {
                     b.HasOne("RaceDay.Models.Category", "Category")
@@ -281,6 +325,23 @@ namespace RaceDay.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Event");
+
+                    b.Navigation("Participant");
+                });
+
+            modelBuilder.Entity("RaceDay.Models.UserAccount", b =>
+                {
+                    b.HasOne("RaceDay.Models.Organiser", "Organiser")
+                        .WithMany()
+                        .HasForeignKey("OrganisersId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RaceDay.Models.Participant", "Participant")
+                        .WithMany()
+                        .HasForeignKey("ParticipantsId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Organiser");
 
                     b.Navigation("Participant");
                 });
