@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.Data;
 using RaceDay.Models;
+using System.Security.Claims;
+using RaceDay.DTOs;
 
 namespace RaceDay.Controllers;
 
@@ -100,4 +102,76 @@ public class EventsController : ControllerBase
 
         return NoContent();
     }
+
+
+    [HttpPost("{eventId}/enrol")]
+[Authorize(Roles = "Participant")]
+public async Task<IActionResult> Enrol(
+    string eventId,
+    [FromBody] EnrollmentRequest request)
+{
+    var userAccountId = User.FindFirstValue(
+        ClaimTypes.NameIdentifier);
+
+    if (string.IsNullOrWhiteSpace(userAccountId))
+        return Unauthorized();
+
+    var account = await _context.UserAccounts
+        .AsNoTracking()
+        .SingleOrDefaultAsync(
+            u => u.UserAccountId == userAccountId);
+
+    if (account?.ParticipantsId is null)
+        return Forbid();
+
+    var raceEvent = await _context.Events.FindAsync(eventId);
+
+    if (raceEvent is null)
+        return NotFound("Event not found.");
+
+    var categoryExists = await _context.Categories
+        .AnyAsync(c => c.CategoriesId == request.CategoriesId);
+
+    if (!categoryExists)
+        return BadRequest("The selected category does not exist.");
+
+    var alreadyEnrolled = await _context.Results.AnyAsync(
+        r => r.EventsId == eventId
+          && r.ParticipantsId == account.ParticipantsId);
+
+    if (alreadyEnrolled)
+        return Conflict("You are already enrolled in this event.");
+
+    var enrollment = new Result
+    {
+        EventsId = eventId,
+        ParticipantsId = account.ParticipantsId,
+        CategoriesId = request.CategoriesId,
+        FinishTime = null,
+        FinishPosition = null
+    };
+
+    _context.Results.Add(enrollment);
+
+    try
+    {
+        await _context.SaveChangesAsync();
+    }
+    catch (DbUpdateException)
+    {
+        return Conflict(
+            "The enrolment could not be saved. Check whether you are already enrolled.");
+    }
+
+    return Created(
+        $"/api/Results/{enrollment.ResultsId}",
+        new
+        {
+            message = "Successfully enrolled in the event.",
+            enrollment.ResultsId,
+            enrollment.EventsId,
+            enrollment.ParticipantsId,
+            enrollment.CategoriesId
+        });
+}
 }

@@ -1,3 +1,5 @@
+
+using Microsoft.OpenApi;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Database connection
+
 var connectionString = builder.Configuration
     .GetConnectionString("RaceDayConnection");
 
@@ -21,11 +23,28 @@ if (string.IsNullOrWhiteSpace(connectionString))
 builder.Services.AddDbContext<RaceDayContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Swagger
+//Swagger headache 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token."
+    });
 
-// JWT configuration
+    options.AddSecurityRequirement(document =>
+        new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+});
+
+
 var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException(
         "JWT secret is missing. Configure Jwt:Secret using User Secrets.");
@@ -63,7 +82,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Swagger UI in development
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -72,7 +91,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Authentication must run before authorization
+
 app.UseAuthentication();
 app.UseAuthorization();
 
