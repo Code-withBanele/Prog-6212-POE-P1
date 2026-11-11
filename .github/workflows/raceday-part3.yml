@@ -34,3 +34,22 @@ jobs:
 
       - name: Run unit tests
         run: dotnet test RaceDay.Tests/RaceDay.Tests.csproj --configuration Release --no-restore --logger "console;verbosity=normal"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: RaceDay/Dockerfile
+          push: false
+          tags: raceday-api:ci
+
+      - name: Build MVC Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: RaceDay.Web/Dockerfile
+          push: false
+          tags: raceday-web:ci
