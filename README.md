@@ -1,382 +1,148 @@
-RaceDay Event Management API
-RaceDay is an ASP.NET Core Web API for managing running, walking and cycling events. This repository's part-2-api branch contains the Part 2 backend implementation, built with .NET 10, Entity Framework Core, SQL Server and JWT bearer authentication.
-Features
-- Register and log in as an organiser or participant.
-- Hash passwords before storing them.
-- Authenticate protected endpoints using JWT bearer tokens.
-- Manage categories, routes, events, organisers, participants and results.
-- Allow participants to enrol in an event and select a category.
-- Record a participant's finish time and finishing position.
-- Restrict protected actions using role-based authorization.
-Technology stack
-- .NET 10 / ASP.NET Core Web API
-- Entity Framework Core 10
-- SQL Server LocalDB by default
-- JWT Bearer authentication
-- Swagger / OpenAPI
-Prerequisites
-Install:
-1. .NET 10 SDK
-2. SQL Server LocalDB, or access to another SQL Server instance
-3. Git
-4. EF Core CLI (dotnet-ef) if migrations need to be applied
-Install the EF Core CLI if required:
-dotnet tool install --global dotnet-ef --version 10.0.13
-1. Clone the Part 2 branch
-Run these commands in PowerShell:
+# RaceDay — Part 3 (ASP.NET Core MVC)
+
+RaceDay is an event-management application built with .NET 10. The MVC web application consumes the RaceDay REST API; the API owns SQL Server access, JWT validation and Azure Blob Storage operations.
+
+## Architecture
+
+- **RaceDay.Web** — MVC frontend, cookie authentication and server-side session.
+- **RaceDay** — REST API, JWT authentication, EF Core and Azure Blob Storage integration.
+- **SQL Server 2022** — persistent relational database.
+- **Docker Compose** — starts the database, applies EF Core migrations, then starts the API and MVC frontend.
+
+The MVC container reaches the API over the private Compose network at `http://raceday-api:8080`. The browser reaches MVC at `http://localhost:8080`. The API is also published on `http://localhost:8081` for local API testing.
+
+## Run with Docker (recommended)
+
+### Requirements
+
+- Docker Desktop with the Docker Compose v2 plugin.
+- At least 4 GB RAM available to Docker (SQL Server needs meaningful memory).
+- A strong SQL Server password and a JWT signing secret.
+
+### 1. Get the Part 3 branch
+
+```powershell
 git clone https://github.com/Code-withBanele/Prog-6212-POE-P1.git
 cd Prog-6212-POE-P1
-git switch part-2-api
-The API project is located in the RaceDay directory.
-2. Configure and create the database
-The default connection string is in RaceDay/appsettings.json and points to a LocalDB database named RaceDayApiDB.
-Restore NuGet packages and apply the committed Entity Framework Core migrations:
-dotnet restore .\RaceDay\RaceDay.csproj
-dotnet ef database update --project .\RaceDay\RaceDay.csproj
-If you use a different SQL Server instance, update ConnectionStrings:RaceDayConnection in RaceDay/appsettings.json before applying migrations. Make sure the SQL Server instance is installed and accessible.
-3. Configure the JWT signing secret
-The API reads its JWT signing secret from .NET User Secrets using the key Jwt:Secret. The secret is intentionally not stored in appsettings.json and should never be committed to Git.
-The project already has a UserSecretsId. To generate a random 256-bit secret and save it locally, run this PowerShell script from the repository root:
+git switch part-3-mvc
+```
+
+If the repository is already cloned, switch to and pull the branch:
+
+```powershell
+git switch part-3-mvc
+git pull origin part-3-mvc
+```
+
+### 2. Create your local environment file
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` and replace `SA_PASSWORD` with a strong password (at least 8 characters, uppercase and lowercase letters, a number and a symbol). Do not use a semicolon in the password because it is part of the SQL connection string.
+
+Generate a JWT secret in PowerShell:
+
+```powershell
 $bytes = New-Object byte[] 32
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($bytes)
+[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
 $secret = [Convert]::ToBase64String($bytes)
-dotnet user-secrets set "Jwt:Secret" $secret --project .\RaceDay\RaceDay.csproj
-Remove-Variable secret
-$rng.Dispose()
-The other JWT settings are in RaceDay/appsettings.json:
-- Issuer: RaceDayApi
-- Audience: RaceDayClient
-- Token expiry: 60 minutes by default
-.NET User Secrets is suitable for local development. Use an appropriate secret manager for production deployments.
-4. Build and run the API
-From the repository root:
-dotnet build .\RaceDay\RaceDay.csproj
-dotnet run --project .\RaceDay\RaceDay.csproj
-Open Swagger using the URL printed in the terminal and add /swagger. The current launch settings normally use:
-- HTTPS: https://localhost:7192/swagger
-- HTTP: http://localhost:5162/swagger
-Use the actual URL printed by dotnet run if the ports differ. Swagger is enabled in the Development environment. Press Ctrl+C in the terminal to stop the API.
-API endpoint overview
-Endpoint	Method	Access / purpose
-/api/Auth/register	POST	Public — register an organiser or participant
-/api/Auth/login	POST	Public — log in and receive a JWT
-/api/Categories	GET	Authenticated — list categories
-/api/Categories/{id}	GET	Authenticated — get a category
-/api/Categories	POST	Organiser — create a category
-/api/Categories/{id}	PUT, DELETE	Organiser — update or delete a category
-/api/Routes	GET	Authenticated — list routes
-/api/Routes/{id}	GET	Authenticated — get a route
-/api/Routes	POST	Organiser — create a route
-/api/Routes/{id}	PUT, DELETE	Organiser — update or delete a route
-/api/Events	GET	Authenticated — list events
-/api/Events/{id}	GET	Authenticated — get an event
-/api/Events	POST	Organiser — create an event
-/api/Events/{id}	PUT, DELETE	Organiser — update or delete an event
-/api/Events/{eventId}/enrol	POST	Participant — enrol the signed-in participant
-/api/Organisers	GET, POST	Organiser — list or create organiser profiles
-/api/Organisers/{id}	GET, PUT, DELETE	Organiser — read, update or delete organiser profiles
-/api/Participants	GET, POST	Organiser — list or create participant profiles
-/api/Participants/{id}	GET, PUT, DELETE	Organiser — read, update or delete participant profiles
-/api/Results	GET, POST	Organiser — list or create result records
-/api/Results/{id}	GET, PUT, DELETE	Organiser — read, update or delete a result record
+```
 
+Copy the generated value into `JWT_SECRET` in `.env`. Keep `.env` local; it is ignored by Git and must never be committed.
 
-IDs are generated by the API. Copy the IDs returned by successful requests and use those real IDs in later requests.
-Test the API with Swagger
-1. Register and log in as an organiser
-Open POST /api/Auth/register, click Try it out, and submit:
-{
-  "email": "organiser.demo@example.com",
-  "password": "RaceDayDemo123!",
-  "role": "Organiser",
-  "name": "Alex",
-  "surname": "Morgan"
-}
-Expected first-time response: 201 Created.
-Next, open POST /api/Auth/login and submit:
-{
-  "email": "organiser.demo@example.com",
-  "password": "RaceDayDemo123!"
-}
-Expected response: 200 OK with a JWT token. Click Authorize in Swagger and enter the token returned by login. Do not share the token in screenshots or videos. If the email already exists, log in with the existing account or use a different demo email.
-2. Create a category
-Use POST /api/Categories:
-{
-  "name": "Open",
-  "description": "General participation category"
-}
-Expected response: 201 Created. Save the returned categoriesId.
-3. Create a route
-Use POST /api/Routes:
-{
-  "routeName": "5K City Route",
-  "duration": 60,
-  "startLocation": "Start Park",
-  "endLocation": "Finish Park",
-  "description": "A five-kilometre race route"
-}
-Expected response: 201 Created. Save the returned routeId.
-4. Create an event
-Use GET /api/Organisers to find the organiser's actual organisersId. Then use POST /api/Events, replacing the category, route and organiser placeholders with IDs returned by the API:
-{
-  "eventName": "RaceDay 5K Challenge",
-  "description": "A five-kilometre community running event.",
-  "eventDate": "2026-11-15T08:00:00",
-  "location": "East London",
-  "distanceKm": 5.0,
-  "eventType": "Run",
-  "categoriesId": "YOUR_CATEGORY_ID",
-  "routeId": "YOUR_ROUTE_ID",
-  "teamId": "Team-1",
-  "organisersId": "YOUR_ORGANISER_ID"
-}
-Expected response: 201 Created. Save the returned eventsId and verify the event using GET /api/Events.
-5. Register a participant and enrol them
-Use POST /api/Auth/register to register a participant:
-{
-  "email": "runner.demo@example.com",
-  "password": "RaceDayRunner123!",
-  "role": "Participant",
-  "name": "Jamie",
-  "surname": "Nkosi",
-  "gender": "O",
-  "age": 25
-}
-Log in through POST /api/Auth/login and authorize Swagger using the participant's token. Call POST /api/Events/{eventId}/enrol, replacing {eventId} in the URL with the real event ID, and submit:
-{
-  "categoriesId": "YOUR_CATEGORY_ID"
-}
-Expected first-time response: 201 Created. A duplicate enrolment should return 409 Conflict.
-6. Record a finish time and position
-Switch back to the organiser token. Call GET /api/Results, find the result created during enrolment, and copy its resultsId. Then call PUT /api/Results/{id} with the actual IDs:
-{
-  "resultsId": "YOUR_RESULT_ID",
-  "eventsId": "YOUR_EVENT_ID",
-  "participantsId": "YOUR_PARTICIPANT_ID",
-  "finishTime": "2026-11-15T08:25:30",
-  "finishPosition": 1,
-  "categoriesId": "YOUR_CATEGORY_ID"
-}
-FinishTime is a nullable DateTime in this implementation, so provide an ISO date-time value. Expected response: 204 No Content. Verify the updated record with GET /api/Results.
-Expected HTTP status codes
-- 200 OK — request succeeded.
-- 201 Created — a record was created.
-- 204 No Content — an update or deletion succeeded.
-- 400 Bad Request — invalid input or related IDs.
-- 401 Unauthorized — a token is missing or invalid, or login credentials are incorrect.
-- 403 Forbidden — the authenticated user lacks the required role.
-- 404 Not Found — the requested record does not exist.
-- 409 Conflict — a duplicate email/enrolment or a database relationship prevents an operation.
-CI/CD pipeline evidence
-Add a screenshot of the successful CI/CD workflow run below. You can upload the screenshot to the repository (for example, as Docs/images/ci-cd-screenshot.png) and then replace this placeholder with the image link.
-CI/CD screenshot: Add screenshot here.
-<!-- Example after uploading the image:
-![Successful CI/CD pipeline run](Docs/images/ci-cd-screenshot.png)
--->
+For image uploads, set `AZURE_BLOB_STORAGE_CONNECTION_STRING` to the connection string of your Azure Storage account. This setting is optional for the application to start, but uploads and image retrieval require it. Azure credentials are passed only to the API container, never to MVC.
 
-YouTube demonstration
-Video link: Paste the published YouTube demonstration URL here.
-RaceDay Event Management API
-RaceDay is an ASP.NET Core Web API for managing running, walking and cycling events. This repository's part-2-api branch contains the Part 2 backend implementation, built with .NET 10, Entity Framework Core, SQL Server and JWT bearer authentication.
-Features
-- Register and log in as an organiser or participant.
-- Hash passwords before storing them.
-- Authenticate protected endpoints using JWT bearer tokens.
-- Manage categories, routes, events, organisers, participants and results.
-- Allow participants to enrol in an event and select a category.
-- Record a participant's finish time and finishing position.
-- Restrict protected actions using role-based authorization.
-Technology stack
-- .NET 10 / ASP.NET Core Web API
-- Entity Framework Core 10
-- SQL Server LocalDB by default
-- JWT Bearer authentication
-- Swagger / OpenAPI
-Prerequisites
-Install:
-1. .NET 10 SDK
-2. SQL Server LocalDB, or access to another SQL Server instance
-3. Git
-4. EF Core CLI (dotnet-ef) if migrations need to be applied
-Install the EF Core CLI if required:
-dotnet tool install --global dotnet-ef --version 10.0.13
-1. Clone the Part 2 branch
-Run these commands in PowerShell:
-git clone https://github.com/Code-withBanele/Prog-6212-POE-P1.git
-cd Prog-6212-POE-P1
-git switch part-2-api
-The API project is located in the RaceDay directory.
-2. Configure and create the database
-The default connection string is in RaceDay/appsettings.json and points to a LocalDB database named RaceDayApiDB.
-Restore NuGet packages and apply the committed Entity Framework Core migrations:
-dotnet restore .\RaceDay\RaceDay.csproj
-dotnet ef database update --project .\RaceDay\RaceDay.csproj
-If you use a different SQL Server instance, update ConnectionStrings:RaceDayConnection in RaceDay/appsettings.json before applying migrations. Make sure the SQL Server instance is installed and accessible.
-3. Configure the JWT signing secret
-The API reads its JWT signing secret from .NET User Secrets using the key Jwt:Secret. The secret is intentionally not stored in appsettings.json and should never be committed to Git.
-The project already has a UserSecretsId. To generate a random 256-bit secret and save it locally, run this PowerShell script from the repository root:
-$bytes = New-Object byte[] 32
-$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
-$rng.GetBytes($bytes)
-$secret = [Convert]::ToBase64String($bytes)
-dotnet user-secrets set "Jwt:Secret" $secret --project .\RaceDay\RaceDay.csproj
-Remove-Variable secret
-$rng.Dispose()
-The other JWT settings are in RaceDay/appsettings.json:
-- Issuer: RaceDayApi
-- Audience: RaceDayClient
-- Token expiry: 60 minutes by default
-.NET User Secrets is suitable for local development. Use an appropriate secret manager for production deployments.
-4. Build and run the API
-From the repository root:
-dotnet build .\RaceDay\RaceDay.csproj
-dotnet run --project .\RaceDay\RaceDay.csproj
-Open Swagger using the URL printed in the terminal and add /swagger. The current launch settings normally use:
-- HTTPS: https://localhost:7192/swagger
-- HTTP: http://localhost:5162/swagger
-Use the actual URL printed by dotnet run if the ports differ. Swagger is enabled in the Development environment. Press Ctrl+C in the terminal to stop the API.
-API endpoint overview
-Endpoint	Method	Access / purpose
-/api/Auth/register	POST	Public — register an organiser or participant
-/api/Auth/login	POST	Public — log in and receive a JWT
-/api/Categories	GET	Authenticated — list categories
-/api/Categories/{id}	GET	Authenticated — get a category
-/api/Categories	POST	Organiser — create a category
-/api/Categories/{id}	PUT, DELETE	Organiser — update or delete a category
-/api/Routes	GET	Authenticated — list routes
-/api/Routes/{id}	GET	Authenticated — get a route
-/api/Routes	POST	Organiser — create a route
-/api/Routes/{id}	PUT, DELETE	Organiser — update or delete a route
-/api/Events	GET	Authenticated — list events
-/api/Events/{id}	GET	Authenticated — get an event
-/api/Events	POST	Organiser — create an event
-/api/Events/{id}	PUT, DELETE	Organiser — update or delete an event
-/api/Events/{eventId}/enrol	POST	Participant — enrol the signed-in participant
-/api/Organisers	GET, POST	Organiser — list or create organiser profiles
-/api/Organisers/{id}	GET, PUT, DELETE	Organiser — read, update or delete organiser profiles
-/api/Participants	GET, POST	Organiser — list or create participant profiles
-/api/Participants/{id}	GET, PUT, DELETE	Organiser — read, update or delete participant profiles
-/api/Results	GET, POST	Organiser — list or create result records
-/api/Results/{id}	GET, PUT, DELETE	Organiser — read, update or delete a result record
+### 3. Build and start the stack
 
+```powershell
+docker compose up --build -d
+```
 
-IDs are generated by the API. Copy the IDs returned by successful requests and use those real IDs in later requests.
-Test the API with Swagger
-1. Register and log in as an organiser
-Open POST /api/Auth/register, click Try it out, and submit:
-{
-  "email": "organiser.demo@example.com",
-  "password": "RaceDayDemo123!",
-  "role": "Organiser",
-  "name": "Alex",
-  "surname": "Morgan"
-}
-Expected first-time response: 201 Created.
-Next, open POST /api/Auth/login and submit:
-{
-  "email": "organiser.demo@example.com",
-  "password": "RaceDayDemo123!"
-}
-Expected response: 200 OK with a JWT token. Click Authorize in Swagger and enter the token returned by login. Do not share the token in screenshots or videos. If the email already exists, log in with the existing account or use a different demo email.
-2. Create a category
-Use POST /api/Categories:
-{
-  "name": "Open",
-  "description": "General participation category"
-}
-Expected response: 201 Created. Save the returned categoriesId.
-3. Create a route
-Use POST /api/Routes:
-{
-  "routeName": "5K City Route",
-  "duration": 60,
-  "startLocation": "Start Park",
-  "endLocation": "Finish Park",
-  "description": "A five-kilometre race route"
-}
-Expected response: 201 Created. Save the returned routeId.
-4. Create an event
-Use GET /api/Organisers to find the organiser's actual organisersId. Then use POST /api/Events, replacing the category, route and organiser placeholders with IDs returned by the API:
-{
-  "eventName": "RaceDay 5K Challenge",
-  "description": "A five-kilometre community running event.",
-  "eventDate": "2026-11-15T08:00:00",
-  "location": "East London",
-  "distanceKm": 5.0,
-  "eventType": "Run",
-  "categoriesId": "YOUR_CATEGORY_ID",
-  "routeId": "YOUR_ROUTE_ID",
-  "teamId": "Team-1",
-  "organisersId": "YOUR_ORGANISER_ID"
-}
-Expected response: 201 Created. Save the returned eventsId and verify the event using GET /api/Events.
-5. Register a participant and enrol them
-Use POST /api/Auth/register to register a participant:
-{
-  "email": "runner.demo@example.com",
-  "password": "RaceDayRunner123!",
-  "role": "Participant",
-  "name": "Jamie",
-  "surname": "Nkosi",
-  "gender": "O",
-  "age": 25
-}
-Log in through POST /api/Auth/login and authorize Swagger using the participant's token. Call POST /api/Events/{eventId}/enrol, replacing {eventId} in the URL with the real event ID, and submit:
-{
-  "categoriesId": "YOUR_CATEGORY_ID"
-}
-Expected first-time response: 201 Created. A duplicate enrolment should return 409 Conflict.
-6. Record a finish time and position
-Switch back to the organiser token. Call GET /api/Results, find the result created during enrolment, and copy its resultsId. Then call PUT /api/Results/{id} with the actual IDs:
-{
-  "resultsId": "YOUR_RESULT_ID",
-  "eventsId": "YOUR_EVENT_ID",
-  "participantsId": "YOUR_PARTICIPANT_ID",
-  "finishTime": "2026-11-15T08:25:30",
-  "finishPosition": 1,
-  "categoriesId": "YOUR_CATEGORY_ID"
-}
-FinishTime is a nullable DateTime in this implementation, so provide an ISO date-time value. Expected response: 204 No Content. Verify the updated record with GET /api/Results.
-Expected HTTP status codes
-- 200 OK — request succeeded.
-- 201 Created — a record was created.
-- 204 No Content — an update or deletion succeeded.
-- 400 Bad Request — invalid input or related IDs.
-- 401 Unauthorized — a token is missing or invalid, or login credentials are incorrect.
-- 403 Forbidden — the authenticated user lacks the required role.
-- 404 Not Found — the requested record does not exist.
-- 409 Conflict — a duplicate email/enrolment or a database relationship prevents an operation.
-CI/CD pipeline evidence
-Add a screenshot of the successful CI/CD workflow run below. You can upload the screenshot to the repository (for example, as Docs/images/ci-cd-screenshot.png) and then replace this placeholder with the image link.
-CI/CD screenshot: Add screenshot here.
+Compose performs the startup sequence:
 
-<img width="1140" height="837" alt="image" src="https://github.com/user-attachments/assets/5f5a7c0e-5573-43e3-b609-a0fb155edd23" />
+1. Starts SQL Server and waits for its health check.
+2. Runs the EF Core migration bundle against the SQL Server container.
+3. Starts the API after migrations complete successfully.
+4. Starts MVC after the API health check passes.
 
+The first SQL Server image download and database initialisation can take several minutes.
 
-YouTube demonstration
-Video link:https://youtu.be/oLE757W5_2I
-Troubleshooting
-- JWT secret missing: repeat the User Secrets setup command in section 3.
-- Database connection failed: check that LocalDB or the configured SQL Server instance is installed and available, and verify the connection string.
-- dotnet ef is not found: install the EF CLI tool shown under Prerequisites, then reopen the terminal if needed.
-- Build reports that RaceDay.exe is in use: stop the currently running API with Ctrl+C, then rebuild.
-- 401 or 403 in Swagger: log in again, authorize with the correct token, and check the endpoint's required role.
-- Duplicate email or enrolment: use a new demo email or reuse existing records rather than creating duplicates.
-Security and implementation notes
-- Never commit the JWT signing secret or real credentials.
-- The registration endpoint currently accepts an Organiser or Participant role in the request. For a production deployment, organiser account creation should be restricted to a trusted administrator or provisioning process.
-- Event enrolment currently uses the existing Result entity; finish time and position remain unset until a result is recorded.
-- Use the part-2-api branch for the Part 2 implementation.
-Troubleshooting
-- JWT secret missing: repeat the User Secrets setup command in section 3.
-- Database connection failed: check that LocalDB or the configured SQL Server instance is installed and available, and verify the connection string.
-- dotnet ef is not found: install the EF CLI tool shown under Prerequisites, then reopen the terminal if needed.
-- Build reports that RaceDay.exe is in use: stop the currently running API with Ctrl+C, then rebuild.
-- 401 or 403 in Swagger: log in again, authorize with the correct token, and check the endpoint's required role.
-- Duplicate email or enrolment: use a new demo email or reuse existing records rather than creating duplicates.
-Security and implementation notes
-- Never commit the JWT signing secret or real credentials.
-- The registration endpoint currently accepts an Organiser or Participant role in the request. For a production deployment, organiser account creation should be restricted to a trusted administrator or provisioning process.
-- Event enrolment currently uses the existing Result entity; finish time and position remain unset until a result is recorded.
-- Use the part-2-api branch for the Part 2 implementation.
+### 4. Open the applications
+
+- **RaceDay website:** http://localhost:8080
+- **API Swagger:** http://localhost:8081/swagger
+- **API health:** http://localhost:8081/health
+- **MVC health:** http://localhost:8080/health
+
+Swagger is enabled in the API's Development environment in this local Compose configuration. Do not expose the development Swagger interface publicly in a production deployment.
+
+### 5. Check container status and logs
+
+```powershell
+docker compose ps
+docker compose logs -f raceday-db
+docker compose logs -f raceday-migrate
+docker compose logs -f raceday-api
+docker compose logs -f raceday-web
+```
+
+The migration container should exit with code 0. The API and MVC containers should report healthy.
+
+### 6. Stop the application
+
+```powershell
+docker compose down
+```
+
+The named `raceday-sql-data` volume is retained, so your database records survive normal shutdown and container recreation.
+
+**Warning:** this command permanently deletes the SQL Server data volume. Use it only when you intentionally want to reset the database:
+
+```powershell
+docker compose down --volumes
+```
+
+## Services and ports
+
+| Service | Container port | Host port | Purpose |
+|---|---:|---:|---|
+| MVC | 8080 | 8080 | Browser-facing web application |
+| API | 8080 | 8081 | REST API and Swagger |
+| SQL Server | 1433 | 1433 | Persistent database |
+
+The MVC container uses the Compose DNS name `raceday-api`, not `localhost`, to reach the API. Inside a container, `localhost` refers to that same container.
+
+## Configuration and secrets
+
+| Setting | Container environment variable | Used by |
+|---|---|---|
+| SQL connection | `ConnectionStrings__RaceDayConnection` | API and migration bundle |
+| JWT signing secret | `Jwt__Secret` | API |
+| JWT issuer | `Jwt__Issuer` | API |
+| JWT audience | `Jwt__Audience` | API |
+| Azure Blob connection | `AzureBlobStorage__ConnectionString` | API only |
+| MVC API URL | `RaceDayApi__BaseUrl` | MVC |
+
+The Docker Compose file supplies the SQL connection string and JWT issuer/audience. `.env` supplies the SQL password, JWT secret and optional Azure connection string. Never put real secrets in appsettings files or source control.
+
+The containers listen on HTTP within the local Docker network. For an internet-facing deployment, put a TLS-terminating reverse proxy or managed ingress in front of MVC and API, configure HTTPS and secure cookies, and use a proper secret manager. Do not publish SQL Server's port publicly.
+
+## Local development without Docker
+
+The existing .NET workflow remains available. Configure SQL Server, JWT User Secrets and optional Azure Blob Storage User Secrets for the API, apply migrations, then run the API and MVC projects separately. See `RaceDay.Web/README.md` for the application feature overview and local development notes.
+
+## Troubleshooting
+
+- **Compose says SA_PASSWORD or JWT_SECRET is missing:** check that `.env` exists in the repository root and both values are set.
+- **SQL Server is unhealthy:** check Docker Desktop memory allocation and `docker compose logs raceday-db`. The first startup can take a while.
+- **Migration container exits unsuccessfully:** inspect `docker compose logs raceday-migrate`. The API is deliberately held back until migrations succeed. Do not delete the SQL volume to work around a migration error.
+- **API does not start:** inspect `docker compose logs raceday-api`; check the SQL connection, JWT secret and migration result.
+- **MVC cannot reach the API:** confirm the API health check passes and that `RaceDayApi__BaseUrl` is `http://raceday-api:8080/` inside Compose.
+- **Image uploads fail:** configure `AZURE_BLOB_STORAGE_CONNECTION_STRING`; the API creates the private `event-banners` and `profile-pictures` containers on first upload.
+- **Port already in use:** stop the process using 8080, 8081 or 1433, or change the host-side port mapping in `docker-compose.yml`.
+
+## CI
+
+The Part 3 GitHub Actions workflow builds the API and MVC projects and runs the unit tests. Docker image builds and live container integration should additionally be verified in an environment with Docker available.
