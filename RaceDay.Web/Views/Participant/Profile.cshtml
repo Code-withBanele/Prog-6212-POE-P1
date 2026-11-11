@@ -1,3 +1,22 @@
 @model ParticipantProfileViewModel
 @{ ViewData["Title"] = "My profile"; }
-<div class="row justify-content-center"><div class="col-lg-7"><h1 class="fw-bold">My profile</h1><p class="text-muted">Keep your participant details up to date.</p><div class="card border-0 shadow-sm"><div class="card-body p-4"><form asp-action="Profile" method="post"><div asp-validation-summary="ModelOnly" class="text-danger"></div><div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control"/><span asp-validation-for="Name" class="text-danger"></span></div><div class="mb-3"><label asp-for="Surname" class="form-label"></label><input asp-for="Surname" class="form-control"/><span asp-validation-for="Surname" class="text-danger"></span></div><div class="mb-3"><label asp-for="Age" class="form-label"></label><input asp-for="Age" class="form-control" type="number" min="1" max="120"/><span asp-validation-for="Age" class="text-danger"></span></div><div class="mb-3"><label asp-for="Gender" class="form-label"></label><select asp-for="Gender" class="form-select"><option value="O">Prefer not to say</option><option value="F">Female</option><option value="M">Male</option></select></div><button class="btn btn-warning fw-bold">Save profile</button></form></div></div></div></div>
+<div class="row justify-content-center"><div class="col-lg-7">
+<h1 class="fw-bold">My profile</h1><p class="text-muted">Keep your participant details up to date.</p>
+@if (TempData["StatusMessage"] is string status){<div class="alert alert-success">@status</div>}
+@if (TempData["ErrorMessage"] is string error){<div class="alert alert-warning">@error</div>}
+<div class="card border-0 shadow-sm"><div class="card-body p-4">
+<form asp-action="Profile" method="post" enctype="multipart/form-data">
+@Html.AntiForgeryToken()
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="mb-4">
+@if (!string.IsNullOrWhiteSpace(Model.ProfilePictureUrl)){<img src="@Model.ProfilePictureUrl" alt="Your profile picture" class="rounded-circle mb-3" style="width:120px;height:120px;object-fit:cover" />}
+<label asp-for="ProfilePicture" class="form-label d-block">Profile picture</label>
+<input asp-for="ProfilePicture" type="file" accept="image/png,image/jpeg,image/webp" class="form-control" />
+<div class="form-text">JPG, PNG or WebP · maximum 5 MB</div>
+</div>
+<div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control"/><span asp-validation-for="Name" class="text-danger"></span></div>
+<div class="mb-3"><label asp-for="Surname" class="form-label"></label><input asp-for="Surname" class="form-control"/><span asp-validation-for="Surname" class="text-danger"></span></div>
+<div class="mb-3"><label asp-for="Age" class="form-label"></label><input asp-for="Age" class="form-control" type="number" min="1" max="120"/><span asp-validation-for="Age" class="text-danger"></span></div>
+<div class="mb-3"><label asp-for="Gender" class="form-label"></label><select asp-for="Gender" class="form-select"><option value="O">Prefer not to say</option><option value="F">Female</option><option value="M">Male</option></select></div>
+<button class="btn btn-warning fw-bold">Save profile</button>
+</form></div></div></div></div>
