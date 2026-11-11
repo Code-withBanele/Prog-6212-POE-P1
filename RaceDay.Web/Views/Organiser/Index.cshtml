@@ -1,0 +1,13 @@
+@model OrganiserDashboardViewModel
+@{ ViewData["Title"] = "Organiser dashboard"; }
+<div class="mb-4"><p class="text-warning fw-bold text-uppercase mb-1">Race operations</p><h1 class="fw-bold">Organiser dashboard</h1><p class="text-muted">Your event overview at a glance.</p></div>
+<div class="row g-3 mb-4">
+<div class="col-md-4"><div class="metric-card"><span>Total events</span><strong>@Model.Events.Count</strong></div></div>
+<div class="col-md-4"><div class="metric-card"><span>Upcoming events</span><strong>@Model.UpcomingEvents</strong></div></div>
+<div class="col-md-4"><div class="metric-card"><span>Total enrolments</span><strong>@Model.TotalEnrolments</strong></div></div>
+</div>
+<div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h4 fw-bold mb-0">Events</h2><span class="text-muted small">@Model.CompletedEvents completed</span></div>
+@if(!Model.Events.Any()){<div class="card card-body"><p class="text-muted mb-0">No events were returned by the API.</p></div>}
+<div class="table-responsive"><table class="table align-middle bg-white"><thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Distance</th><th>Type</th></tr></thead><tbody>
+@foreach(var item in Model.Events){<tr><td class="fw-semibold">@item.EventName</td><td>@item.EventDate.ToString("dd MMM yyyy")</td><td>@item.Location</td><td>@item.DistanceKm km</td><td><span class="badge text-bg-secondary">@item.EventType</span></td></tr>}
+</tbody></table></div>
