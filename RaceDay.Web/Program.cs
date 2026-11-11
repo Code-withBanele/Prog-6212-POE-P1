@@ -30,8 +30,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddHttpClient("RaceDayApi", client =>
 {
-    var baseUrl = builder.Configuration["RaceDayApi:BaseUrl"]
-        ?? "https://localhost:7192/";
+    var baseUrl = builder.Configuration["RaceDayApi:BaseUrl"] ?? "https://localhost:7192/";
     client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/");
     client.Timeout = TimeSpan.FromSeconds(30);
 });
@@ -43,13 +42,18 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-app.UseHttpsRedirection();
+if (!app.Configuration.GetValue<bool>("DisableHttpsRedirection"))
+    app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "RaceDay MVC" }));
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.Run();
