@@ -59,7 +59,7 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             EventName = item.EventName, Description = item.Description,
             EventDate = item.EventDate, Location = item.Location,
             DistanceKm = item.DistanceKm, EventType = item.EventType,
-            CategoriesId = item.CategoriesId, RouteId = item.RouteId
+            CategoryIds = item.CategoryIds.Count > 0 ? item.CategoryIds : [item.CategoriesId], RouteId = item.RouteId
         };
         await LoadEventOptions(model);
         ViewBag.EventId = id;
@@ -78,13 +78,13 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
         var payload = new
         {
             EventsId = id, model.EventName, model.Description, model.EventDate,
-            model.Location, model.DistanceKm, model.EventType, model.CategoriesId,
-            model.RouteId, TeamId = "OPEN"
+            model.Location, model.DistanceKm, model.EventType, CategoryIds = model.CategoryIds,
+            CategoriesId = model.CategoryIds.FirstOrDefault() ?? string.Empty, model.RouteId, TeamId = "OPEN"
         };
         using var response = await Api().PutAsJsonAsync($"api/Events/{Uri.EscapeDataString(id)}", payload);
         if (!response.IsSuccessStatusCode)
         {
-            ModelState.AddModelError(string.Empty, "The event could not be updated. Confirm the selected category and route.");
+            ModelState.AddModelError(string.Empty, "The event could not be updated. Confirm the selected categories and route.");
             await LoadEventOptions(model);
             ViewBag.EventId = id;
             return View(model);
@@ -166,7 +166,8 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             model.Location,
             model.DistanceKm,
             model.EventType,
-            model.CategoriesId,
+            CategoryIds = model.CategoryIds,
+            CategoriesId = model.CategoryIds.FirstOrDefault() ?? string.Empty,
             model.RouteId,
             // The API has no Team entity/table or team-management endpoint.
             // Use the explicit unassigned group value rather than asking users for a fake ID.
