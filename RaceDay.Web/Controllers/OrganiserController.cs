@@ -46,6 +46,101 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> Edit(string id)
+    {
+        using var client = Api();
+        using var response = await client.GetAsync($"api/Events/{Uri.EscapeDataString(id)}");
+        if (!response.IsSuccessStatusCode) return NotFound();
+        var item = await response.Content.ReadFromJsonAsync<EventListItemViewModel>();
+        if (item is null) return NotFound();
+
+        var model = new OrganiserEventViewModel
+        {
+            EventName = item.EventName, Description = item.Description,
+            EventDate = item.EventDate, Location = item.Location,
+            DistanceKm = item.DistanceKm, EventType = item.EventType,
+            CategoriesId = item.CategoriesId, RouteId = item.RouteId
+        };
+        await LoadEventOptions(model);
+        ViewBag.EventId = id;
+        return View(model);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(string id, OrganiserEventViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            await LoadEventOptions(model);
+            ViewBag.EventId = id;
+            return View(model);
+        }
+        var payload = new
+        {
+            EventsId = id, model.EventName, model.Description, model.EventDate,
+            model.Location, model.DistanceKm, model.EventType, model.CategoriesId,
+            model.RouteId, TeamId = "OPEN"
+        };
+        using var response = await Api().PutAsJsonAsync($"api/Events/{Uri.EscapeDataString(id)}", payload);
+        if (!response.IsSuccessStatusCode)
+        {
+            ModelState.AddModelError(string.Empty, "The event could not be updated. Confirm the selected category and route.");
+            await LoadEventOptions(model);
+            ViewBag.EventId = id;
+            return View(model);
+        }
+        TempData["SuccessMessage"] = "Event details updated.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(string id)
+    {
+        using var response = await Api().DeleteAsync($"api/Events/{Uri.EscapeDataString(id)}");
+        if (response.IsSuccessStatusCode)
+            TempData["SuccessMessage"] = "Event deleted.";
+        else
+            TempData["ErrorMessage"] = response.StatusCode == System.Net.HttpStatusCode.Conflict
+                ? "This event has related enrolments and cannot be deleted."
+                : "The event could not be deleted.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Enrolments(string id)
+    {
+        using var client = Api();
+        using var eventResponse = await client.GetAsync($"api/Events/{Uri.EscapeDataString(id)}");
+        if (!eventResponse.IsSuccessStatusCode) return NotFound();
+        var raceEvent = await eventResponse.Content.ReadFromJsonAsync<EventListItemViewModel>();
+        if (raceEvent is null) return NotFound();
+
+        using var rowsResponse = await client.GetAsync($"api/Results/event/{Uri.EscapeDataString(id)}");
+        if (!rowsResponse.IsSuccessStatusCode)
+        {
+            TempData["ErrorMessage"] = "Enrolments could not be loaded.";
+            return RedirectToAction(nameof(Index));
+        }
+        var rows = await rowsResponse.Content.ReadFromJsonAsync<List<OrganiserEnrolmentViewModel>>() ?? [];
+        return View(new OrganiserEnrolmentsPageViewModel { Event = raceEvent, Enrolments = rows });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveResult(string id, string resultId, DateTime? finishTime, int? finishPosition)
+    {
+        if (finishPosition is <= 0)
+        {
+            TempData["ErrorMessage"] = "Finishing position must be a positive number.";
+            return RedirectToAction(nameof(Enrolments), new { id });
+        }
+        var payload = new { ResultsId = resultId, FinishTime = finishTime, FinishPosition = finishPosition };
+        using var response = await Api().PutAsJsonAsync($"api/Results/{Uri.EscapeDataString(resultId)}", payload);
+        TempData[response.IsSuccessStatusCode ? "SuccessMessage" : "ErrorMessage"] =
+            response.IsSuccessStatusCode ? "Race result saved." : "The result could not be saved.";
+        return RedirectToAction(nameof(Enrolments), new { id });
+    }
+
+    [HttpGet]
     public async Task<IActionResult> Create()
     {
         var model = new OrganiserEventViewModel();
