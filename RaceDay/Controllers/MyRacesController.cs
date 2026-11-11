@@ -110,7 +110,6 @@ public sealed class MyRacesController(RaceDayContext context, IBlobStorageServic
     }
 
     [HttpGet("profile-picture/{participantId}")]
-    [AllowAnonymous]
     public async Task<IActionResult> GetProfilePicture(string participantId)
     {
         var blobName = await context.Participants.AsNoTracking()
