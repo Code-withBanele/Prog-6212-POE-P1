@@ -43,6 +43,23 @@ namespace RaceDay.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
+            modelBuilder.Entity("RaceDay.Models.EventCategory", b =>
+                {
+                    b.Property<string>("EventsId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("CategoriesId")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("EventsId", "CategoriesId");
+
+                    b.HasIndex("CategoriesId");
+
+                    b.ToTable("EventCategories", (string)null);
+                });
+
             modelBuilder.Entity("RaceDay.Models.Event", b =>
                 {
                     b.Property<string>("EventsId")
@@ -348,12 +365,35 @@ namespace RaceDay.Migrations
 
             modelBuilder.Entity("RaceDay.Models.Category", b =>
                 {
+                    b.Navigation("EventCategories");
+
                     b.Navigation("Events");
                 });
 
             modelBuilder.Entity("RaceDay.Models.Event", b =>
                 {
+                    b.Navigation("EventCategories");
+
                     b.Navigation("Results");
+                });
+
+            modelBuilder.Entity("RaceDay.Models.EventCategory", b =>
+                {
+                    b.HasOne("RaceDay.Models.Category", "Category")
+                        .WithMany("EventCategories")
+                        .HasForeignKey("CategoriesId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RaceDay.Models.Event", "Event")
+                        .WithMany("EventCategories")
+                        .HasForeignKey("EventsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Event");
                 });
 
             modelBuilder.Entity("RaceDay.Models.Organiser", b =>
