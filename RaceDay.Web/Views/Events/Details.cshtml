@@ -8,8 +8,16 @@
 <h1 class="display-5 fw-bold">@Model.Event.EventName</h1><p class="lead">@Model.Event.Description</p>
 <div class="row g-3 my-3"><div class="col-sm-6"><strong>When</strong><p>@Model.Event.EventDate.ToString("dddd, dd MMMM yyyy · HH:mm")</p></div><div class="col-sm-6"><strong>Where</strong><p>@Model.Event.Location</p></div></div>
 <hr/><h2 class="h5 fw-bold">Enrol in this event</h2>
+@if (!Model.Categories.Any())
+{
+    <div class="alert alert-warning">This event has no categories configured yet. Please contact the organiser.</div>
+}
+else
+{
 <form asp-action="Enrol" asp-route-id="@Model.Event.EventsId" method="post">
 <label class="form-label" for="categoriesId">Select your category</label>
 <select class="form-select mb-3" id="categoriesId" name="categoriesId" required><option value="">Choose a category</option>@foreach(var category in Model.Categories){<option value="@category.CategoriesId">@category.Name — @category.Description</option>}</select>
 <button class="btn btn-warning fw-bold">Confirm enrolment</button>
-</form></div></div>
+</form>
+}
+</div></div>
