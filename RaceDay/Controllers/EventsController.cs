@@ -66,7 +66,11 @@ public class EventsController : ControllerBase
     {
         if (id != item.EventsId) return BadRequest();
 
-        var existing = await _context.Events.FindAsync(id);
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+
+        var existing = await _context.Events.SingleOrDefaultAsync(e =>
+            e.EventsId == id && e.OrganisersId == organiserId);
         if (existing is null) return NotFound();
 
         existing.EventName = item.EventName;
@@ -78,7 +82,7 @@ public class EventsController : ControllerBase
         existing.CategoriesId = item.CategoriesId;
         existing.RouteId = item.RouteId;
         existing.TeamId = item.TeamId;
-        existing.OrganisersId = item.OrganisersId;
+        // Ownership is immutable and always comes from the authenticated account.
 
         try
         {
@@ -97,7 +101,11 @@ public class EventsController : ControllerBase
     [Authorize(Roles = "Organiser")]
     public async Task<IActionResult> Delete(string id)
     {
-        var item = await _context.Events.FindAsync(id);
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+
+        var item = await _context.Events.SingleOrDefaultAsync(e =>
+            e.EventsId == id && e.OrganisersId == organiserId);
         if (item is null) return NotFound();
 
         _context.Events.Remove(item);
@@ -114,6 +122,16 @@ public class EventsController : ControllerBase
         return NoContent();
     }
 
+
+    private async Task<string?> GetCurrentOrganiserId()
+    {
+        var accountId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(accountId)) return null;
+
+        var account = await _context.UserAccounts.AsNoTracking()
+            .SingleOrDefaultAsync(u => u.UserAccountId == accountId);
+        return account?.OrganisersId;
+    }
 
     [HttpPost("{eventId}/enrol")]
 [Authorize(Roles = "Participant")]
