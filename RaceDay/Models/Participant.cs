@@ -27,6 +27,12 @@ public class Participant
     public int Age { get; set; }
 
 
+    [MaxLength(200)]
+    public string? ProfilePictureBlobName { get; set; }
+
+    [NotMapped]
+    public string? ProfilePictureUrl { get; set; }
+
     public ICollection<Result> Results { get; set; } = new List<Result>();
 }
 
