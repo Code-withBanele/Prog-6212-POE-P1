@@ -25,11 +25,9 @@ public sealed class OrganiserEventViewModel
     [Required]
     public string CategoriesId { get; set; } = "";
 
-    [Required, StringLength(50)]
+    [Required]
     public string RouteId { get; set; } = "";
 
-    [Required, StringLength(50)]
-    public string TeamId { get; set; } = "";
-
     public List<CategoryOptionViewModel> Categories { get; set; } = [];
+    public List<RouteOptionViewModel> Routes { get; set; } = [];
 }
