@@ -49,7 +49,7 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
     public async Task<IActionResult> Create()
     {
         var model = new OrganiserEventViewModel();
-        if (!await LoadCategories(model)) return RedirectToAction(nameof(Index));
+        await LoadEventOptions(model);
         return View(model);
     }
 
@@ -59,21 +59,23 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
     {
         if (!ModelState.IsValid)
         {
-            await LoadCategories(model);
+            await LoadEventOptions(model);
             return View(model);
         }
 
         var payload = new
         {
-            EventName = model.EventName,
-            Description = model.Description,
-            EventDate = model.EventDate,
-            Location = model.Location,
-            DistanceKm = model.DistanceKm,
-            EventType = model.EventType,
-            CategoriesId = model.CategoriesId,
-            RouteId = model.RouteId,
-            TeamId = model.TeamId
+            model.EventName,
+            model.Description,
+            model.EventDate,
+            model.Location,
+            model.DistanceKm,
+            model.EventType,
+            model.CategoriesId,
+            model.RouteId,
+            // The API has no Team entity/table or team-management endpoint.
+            // Use the explicit unassigned group value rather than asking users for a fake ID.
+            TeamId = "OPEN"
         };
 
         using var response = await Api().PostAsJsonAsync("api/Events", payload);
@@ -81,8 +83,8 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
         {
             var detail = await response.Content.ReadAsStringAsync();
             ModelState.AddModelError(string.Empty,
-                string.IsNullOrWhiteSpace(detail) ? "The API could not create this event. Check the category, route and team IDs." : detail);
-            await LoadCategories(model);
+                string.IsNullOrWhiteSpace(detail) ? "The API could not create this event. Check the selected category and route." : detail);
+            await LoadEventOptions(model);
             return View(model);
         }
 
@@ -90,17 +92,43 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<bool> LoadCategories(OrganiserEventViewModel model)
+    [HttpGet]
+    public IActionResult CreateRoute() => View(new CreateRouteViewModel());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateRoute(CreateRouteViewModel model)
     {
-        var categories = await Api().GetFromJsonAsync<List<CategoryOptionViewModel>>("api/Categories");
-        model.Categories = categories ?? [];
-        if (model.Categories.Count == 0)
+        if (!ModelState.IsValid) return View(model);
+
+        using var response = await Api().PostAsJsonAsync("api/Routes", model);
+        if (!response.IsSuccessStatusCode)
         {
-            ModelState.AddModelError(string.Empty, "No categories are available. Create a category through the API before creating an event.");
-            TempData["ErrorMessage"] = "No event categories are configured yet.";
-            return false;
+            var detail = await response.Content.ReadAsStringAsync();
+            ModelState.AddModelError(string.Empty,
+                string.IsNullOrWhiteSpace(detail) ? "The API could not save this route." : detail);
+            return View(model);
         }
-        return true;
+
+        TempData["SuccessMessage"] = "Route created. You can now select it when creating an event.";
+        return RedirectToAction(nameof(Create));
+    }
+
+    private async Task LoadEventOptions(OrganiserEventViewModel model)
+    {
+        using var client = Api();
+        using var categoriesResponse = await client.GetAsync("api/Categories");
+        if (categoriesResponse.IsSuccessStatusCode)
+            model.Categories = await categoriesResponse.Content.ReadFromJsonAsync<List<CategoryOptionViewModel>>() ?? [];
+
+        using var routesResponse = await client.GetAsync("api/Routes");
+        if (routesResponse.IsSuccessStatusCode)
+            model.Routes = await routesResponse.Content.ReadFromJsonAsync<List<RouteOptionViewModel>>() ?? [];
+
+        if (model.Categories.Count == 0)
+            ModelState.AddModelError(string.Empty, "No categories are configured. Add a category through the API before creating an event.");
+        if (model.Routes.Count == 0)
+            ModelState.AddModelError(string.Empty, "No routes exist yet. Create a route first using the button below.");
     }
 
     private sealed class ResultSummary
