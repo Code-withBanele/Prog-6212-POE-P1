@@ -54,6 +54,11 @@
                     <div class="form-text">Hold Ctrl (Windows) or Command (Mac) to select multiple age or distance categories.</div>
                 </div>
                 <div class="col-12">
+                    <label asp-for="BannerImage" class="form-label">Event banner (optional)</label>
+                    <input asp-for="BannerImage" type="file" accept="image/png,image/jpeg,image/webp" class="form-control" />
+                    <div class="form-text">JPG, PNG or WebP · maximum 5 MB</div>
+                </div>
+                <div class="col-12">
                     <label asp-for="RouteId" class="form-label">Race route</label>
                     <select asp-for="RouteId" class="form-select">
                         <option value="">Choose an existing route</option>
