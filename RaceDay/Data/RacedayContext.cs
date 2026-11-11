@@ -1,40 +1,30 @@
-﻿using Route = RaceDay.Models.Route;
+using Route = RaceDay.Models.Route;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.Models;
 
 namespace RaceDay.Data;
 
 public class RaceDayContext : DbContext
-
 {
-    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
-    public RaceDayContext(DbContextOptions<RaceDayContext> options)
-        : base(options)
-    {
-    }
+    public RaceDayContext(DbContextOptions<RaceDayContext> options) : base(options) { }
 
+    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
     public DbSet<Organiser> Organisers => Set<Organiser>();
     public DbSet<Participant> Participants => Set<Participant>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Route> Routes => Set<Route>();
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Result> Results => Set<Result>();
+    public DbSet<EventCategory> EventCategories => Set<EventCategory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Organiser>()
-            .ToTable("Organisers");
-
-        modelBuilder.Entity<Participant>()
-            .ToTable("Participants");
-
-        modelBuilder.Entity<Category>()
-            .ToTable("Categories");
-
-        modelBuilder.Entity<Route>()
-            .ToTable("Route");
+        modelBuilder.Entity<Organiser>().ToTable("Organisers");
+        modelBuilder.Entity<Participant>().ToTable("Participants");
+        modelBuilder.Entity<Category>().ToTable("Categories");
+        modelBuilder.Entity<Route>().ToTable("Route");
 
         modelBuilder.Entity<Event>()
             .ToTable("Events")
@@ -45,12 +35,27 @@ public class RaceDayContext : DbContext
             .HasIndex(r => new { r.EventsId, r.ParticipantsId })
             .IsUnique();
 
+        modelBuilder.Entity<EventCategory>(entity =>
+        {
+            entity.ToTable("EventCategories");
+            entity.HasKey(ec => new { ec.EventsId, ec.CategoriesId });
+            entity.HasOne(ec => ec.Event)
+                .WithMany(e => e.EventCategories)
+                .HasForeignKey(ec => ec.EventsId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(ec => ec.Category)
+                .WithMany(c => c.EventCategories)
+                .HasForeignKey(ec => ec.CategoriesId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<Event>()
             .HasOne(e => e.Organiser)
             .WithMany(o => o.Events)
             .HasForeignKey(e => e.OrganisersId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Legacy single-category FK is retained for backwards compatibility.
         modelBuilder.Entity<Event>()
             .HasOne(e => e.Category)
             .WithMany(c => c.Events)
@@ -81,44 +86,22 @@ public class RaceDayContext : DbContext
             .HasForeignKey(r => r.CategoriesId)
             .OnDelete(DeleteBehavior.Restrict);
 
-     modelBuilder.Entity<Event>()
-    .Property(e => e.DistanceKm)
-    .HasPrecision(8, 2);
+        modelBuilder.Entity<Event>().Property(e => e.DistanceKm).HasPrecision(8, 2);
+
+        modelBuilder.Entity<UserAccount>().ToTable("UserAccounts");
+        modelBuilder.Entity<UserAccount>().HasIndex(u => u.Email).IsUnique();
+        modelBuilder.Entity<UserAccount>().Property(u => u.Email).HasMaxLength(256).IsRequired();
 
         modelBuilder.Entity<UserAccount>()
-    .ToTable("UserAccounts");
-
+            .HasOne(u => u.Organiser).WithMany()
+            .HasForeignKey(u => u.OrganisersId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<UserAccount>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
+            .HasOne(u => u.Participant).WithMany()
+            .HasForeignKey(u => u.ParticipantsId).OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<UserAccount>()
-            .Property(u => u.Email)
-            .HasMaxLength(256)
-            .IsRequired();
-
-        modelBuilder.Entity<UserAccount>()
-            .HasOne(u => u.Organiser)
-            .WithMany()
-            .HasForeignKey(u => u.OrganisersId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<UserAccount>()
-            .HasOne(u => u.Participant)
-            .WithMany()
-            .HasForeignKey(u => u.ParticipantsId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<UserAccount>()
-            .HasIndex(u => u.OrganisersId)
-            .IsUnique()
-            .HasFilter("[OrganisersId] IS NOT NULL");
-
-        modelBuilder.Entity<UserAccount>()
-            .HasIndex(u => u.ParticipantsId)
-            .IsUnique()
-            .HasFilter("[ParticipantsId] IS NOT NULL");
+        modelBuilder.Entity<UserAccount>().HasIndex(u => u.OrganisersId)
+            .IsUnique().HasFilter("[OrganisersId] IS NOT NULL");
+        modelBuilder.Entity<UserAccount>().HasIndex(u => u.ParticipantsId)
+            .IsUnique().HasFilter("[ParticipantsId] IS NOT NULL");
     }
-
-
 }
