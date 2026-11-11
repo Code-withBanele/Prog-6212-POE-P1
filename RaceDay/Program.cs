@@ -1,4 +1,3 @@
-
 using Microsoft.OpenApi;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -12,20 +11,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
 
-
-var connectionString = builder.Configuration
-    .GetConnectionString("RaceDayConnection");
-
+var connectionString = builder.Configuration.GetConnectionString("RaceDayConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Connection string 'RaceDayConnection' was not found.");
-}
+    throw new InvalidOperationException("Connection string 'RaceDayConnection' was not found.");
 
-builder.Services.AddDbContext<RaceDayContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<RaceDayContext>(options => options.UseSqlServer(connectionString));
 
-//Swagger headache 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -46,20 +37,14 @@ builder.Services.AddSwaggerGen(options =>
         });
 });
 
-
 var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException(
-        "JWT secret is missing. Configure Jwt:Secret using User Secrets.");
-
+    ?? throw new InvalidOperationException("JWT secret is missing. Configure Jwt:Secret using User Secrets or environment variables.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"]
     ?? throw new InvalidOperationException("JWT issuer is missing.");
-
 var jwtAudience = builder.Configuration["Jwt:Audience"]
     ?? throw new InvalidOperationException("JWT audience is missing.");
 
-var signingKey = new SymmetricSecurityKey(
-    Encoding.UTF8.GetBytes(jwtSecret));
-
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -68,13 +53,10 @@ builder.Services
         {
             ValidateIssuer = true,
             ValidIssuer = jwtIssuer,
-
             ValidateAudience = true,
             ValidAudience = jwtAudience,
-
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = signingKey,
-
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1)
         };
@@ -84,19 +66,19 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
+if (!app.Configuration.GetValue<bool>("DisableHttpsRedirection"))
+    app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", service = "RaceDay API" }));
 app.MapControllers();
 
 app.Run();
