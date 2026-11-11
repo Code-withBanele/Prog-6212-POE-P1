@@ -1,11 +1,85 @@
-@model List<EventListItemViewModel>
-@{ ViewData["Title"] = "Find events"; }
-<div class="d-flex justify-content-between align-items-end mb-4"><div><p class="text-warning fw-bold text-uppercase mb-1">Find your next challenge</p><h1 class="fw-bold">Upcoming events</h1><p class="text-muted mb-0">Explore races and choose your next finish line.</p></div></div>
-@if (TempData["ErrorMessage"] is string error) { <div class="alert alert-warning">@error</div> }
-@if (!Model.Any()) { <div class="card card-body"><p class="mb-0 text-muted">No events are currently available.</p></div> }
-<div class="row g-3">
-@foreach (var item in Model.Where(e => e.EventDate >= DateTime.Today))
-{
-<div class="col-md-6 col-xl-4"><div class="card h-100 shadow-sm border-0"><div class="card-body d-flex flex-column"><span class="badge text-bg-dark align-self-start mb-3">@item.EventType · @item.DistanceKm km</span><h2 class="h5 fw-bold">@item.EventName</h2><p class="text-muted small">@item.Description</p><p class="small mb-1"><strong>Date:</strong> @item.EventDate.ToString("dd MMM yyyy HH:mm")</p><p class="small"><strong>Location:</strong> @item.Location</p><a class="btn btn-warning mt-auto fw-semibold" asp-action="Details" asp-route-id="@item.EventsId">View event</a></div></div></div>
+@model EventSearchViewModel
+@{
+    ViewData["Title"] = "Find events";
 }
+<div class="mb-4">
+    <p class="text-warning fw-bold text-uppercase mb-1">Find your next challenge</p>
+    <h1 class="fw-bold">Upcoming events</h1>
+    <p class="text-muted mb-0">Search races, narrow down your options and choose your next finish line.</p>
 </div>
+
+@if (TempData["ErrorMessage"] is string error)
+{
+    <div class="alert alert-warning">@error</div>
+}
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<form method="get" asp-action="Index" class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3 p-lg-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label asp-for="Search" class="form-label">Search events</label>
+                <input asp-for="Search" class="form-control" placeholder="Event name, location or keyword" />
+            </div>
+            <div class="col-sm-6 col-lg-2">
+                <label asp-for="EventType" class="form-label">Activity</label>
+                <select asp-for="EventType" class="form-select">
+                    <option value="">All activities</option>
+                    <option value="Run">Running</option>
+                    <option value="Walk">Walking</option>
+                    <option value="Cycle">Cycling</option>
+                </select>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label">Distance (km)</label>
+                <div class="input-group">
+                    <input asp-for="MinDistance" class="form-control" type="number" min="0" step="0.1" placeholder="Min" />
+                    <input asp-for="MaxDistance" class="form-control" type="number" min="0" step="0.1" placeholder="Max" />
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <label class="form-label">Date range</label>
+                <div class="input-group">
+                    <input asp-for="FromDate" class="form-control" type="date" aria-label="From date" />
+                    <input asp-for="ToDate" class="form-control" type="date" aria-label="To date" />
+                </div>
+            </div>
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-warning fw-semibold">Apply filters</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+                <span class="text-muted small align-self-center ms-auto">@Model.Events.Count event(s) found</span>
+            </div>
+        </div>
+    </div>
+</form>
+
+@if (!Model.Events.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 text-center">
+            <h2 class="h5 fw-bold">No matching events</h2>
+            <p class="text-muted mb-3">Try changing your search or clearing some filters.</p>
+            <a asp-action="Index" class="btn btn-outline-dark">Show all upcoming events</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+    @foreach (var item in Model.Events)
+    {
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body d-flex flex-column">
+                    <span class="badge text-bg-dark align-self-start mb-3">@item.EventType · @item.DistanceKm km</span>
+                    <h2 class="h5 fw-bold">@item.EventName</h2>
+                    <p class="text-muted small">@item.Description</p>
+                    <p class="small mb-1"><strong>Date:</strong> @item.EventDate.ToString("dd MMM yyyy HH:mm")</p>
+                    <p class="small"><strong>Location:</strong> @item.Location</p>
+                    <a class="btn btn-warning mt-auto fw-semibold" asp-action="Details" asp-route-id="@item.EventsId">View event</a>
+                </div>
+            </div>
+        </div>
+    }
+    </div>
+}
