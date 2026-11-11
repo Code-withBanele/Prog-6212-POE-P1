@@ -58,8 +58,13 @@ public sealed class AccountController(IHttpClientFactory httpClientFactory) : Co
             ModelState.AddModelError(nameof(model.Role), "Select a valid account role.");
             return View(model);
         }
+        if (model.Role == "Participant" && !model.Age.HasValue)
+        {
+            ModelState.AddModelError(nameof(model.Age), "Age is required for participant accounts.");
+            return View(model);
+        }
         var client = httpClientFactory.CreateClient("RaceDayApi");
-        using var response = await client.PostAsJsonAsync("api/Auth/register", new { model.Email, model.Password, model.Role });
+        using var response = await client.PostAsJsonAsync("api/Auth/register", new { model.Email, model.Password, model.Role, model.Name, model.Surname, model.Gender, model.Age });
         if (!response.IsSuccessStatusCode)
         {
             ModelState.AddModelError(string.Empty, "Registration failed. The email may already be registered.");
