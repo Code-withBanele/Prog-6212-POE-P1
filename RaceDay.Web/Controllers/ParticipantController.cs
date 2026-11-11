@@ -36,6 +36,8 @@ public sealed class ParticipantController(IHttpClientFactory clients) : Controll
         using var response = await Api().GetAsync("api/MyRaces/profile");
         if (!response.IsSuccessStatusCode) return View(new ParticipantProfileViewModel());
         var profile = await response.Content.ReadFromJsonAsync<ParticipantProfileViewModel>();
+        if (profile is not null && !string.IsNullOrWhiteSpace(profile.ParticipantsId))
+            profile.ProfilePictureUrl = Url.Action(nameof(ProfilePicture), new { participantId = profile.ParticipantsId });
         return View(profile ?? new ParticipantProfileViewModel());
     }
 
@@ -62,6 +64,17 @@ public sealed class ParticipantController(IHttpClientFactory clients) : Controll
 
         TempData["StatusMessage"] = "Your profile has been updated.";
         return RedirectToAction(nameof(Profile));
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> ProfilePicture(string participantId)
+    {
+        using var response = await Api().GetAsync(
+            $"api/MyRaces/profile-picture/{Uri.EscapeDataString(participantId)}");
+        if (!response.IsSuccessStatusCode) return NotFound();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return File(await response.Content.ReadAsByteArrayAsync(), contentType);
     }
 
     private async Task<bool> UploadProfilePictureAsync(IFormFile file)
