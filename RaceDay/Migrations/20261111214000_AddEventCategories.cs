@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using RaceDay.Data;
 
 #nullable disable
 
 namespace RaceDay.Migrations;
 
+[DbContext(typeof(RaceDayContext))]
+[Migration("20261111214000_AddEventCategories")]
 public partial class AddEventCategories : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
