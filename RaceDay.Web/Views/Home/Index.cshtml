@@ -1,2 +1,58 @@
-@{ ViewData["Title"] = "Home"; }
-<section class="hero-panel p-5 rounded-4 text-white"><p class="text-warning fw-bold text-uppercase">Plan. Participate. Perform.</p><h1 class="display-3 fw-bold">Your next finish line<br/>starts here.</h1><p class="lead">Discover events, manage race day operations and track every result with RaceDay.</p>@if(User.Identity?.IsAuthenticated != true){<a class="btn btn-warning btn-lg fw-bold me-2" asp-controller="Account" asp-action="Register">Get started</a><a class="btn btn-outline-light btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>}else{<p>Signed in as <strong>@User.Identity.Name</strong>. Role: @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</p>}</section>
+@{
+    ViewData["Title"] = "Race better";
+    var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+<section class="hero-panel rounded-4 p-4 p-lg-5 text-white mb-5">
+    <p class="text-warning fw-bold text-uppercase mb-3">Plan. Participate. Perform.</p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <h1 class="display-2 fw-bold mb-4">Good to have<br />you back.</h1>
+        <p class="lead mb-4">Your next race day is closer than you think. Pick up where you left off.</p>
+        @if (role == "Organiser")
+        {
+            <a class="btn btn-warning btn-lg" asp-controller="Organiser" asp-action="Index">Open organiser dashboard <span aria-hidden="true">↗</span></a>
+        }
+        else if (role == "Participant")
+        {
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-warning btn-lg" asp-controller="Events" asp-action="Index">Explore events <span aria-hidden="true">↗</span></a>
+                <a class="btn btn-outline-light btn-lg" asp-controller="Participant" asp-action="MyRaces">View my races</a>
+            </div>
+        }
+    }
+    else
+    {
+        <h1 class="display-2 fw-bold mb-4">Your next finish line<br />starts here.</h1>
+        <p class="lead mb-4">One place to discover events, manage race day operations and keep track of every result.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-warning btn-lg" asp-controller="Account" asp-action="Register">Get started <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-outline-light btn-lg" asp-controller="Account" asp-action="Login">Sign in</a>
+        </div>
+    }
+    <div class="mt-5 pt-3 d-flex flex-wrap gap-4 small text-white-50">
+        <span>01 / Discover</span><span>02 / Get involved</span><span>03 / Track your progress</span>
+    </div>
+</section>
+<section class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="h-100 p-4 bg-white rounded-4 border">
+            <span class="text-warning fw-bold small">01 — PARTICIPANTS</span>
+            <h2 class="h4 fw-bold mt-3">Find your next challenge.</h2>
+            <p class="text-muted mb-0">Browse upcoming events, filter by activity and distance, enrol in a category and follow your results.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="h-100 p-4 bg-white rounded-4 border">
+            <span class="text-warning fw-bold small">02 — ORGANISERS</span>
+            <h2 class="h4 fw-bold mt-3">Bring race day together.</h2>
+            <p class="text-muted mb-0">Create and manage events, configure routes, review enrolments and publish finishing results.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="h-100 p-4 bg-white rounded-4 border">
+            <span class="text-warning fw-bold small">03 — YOUR PROGRESS</span>
+            <h2 class="h4 fw-bold mt-3">Keep every finish in view.</h2>
+            <p class="text-muted mb-0">Your profile, race history and recorded results stay connected to your RaceDay account.</p>
+        </div>
+    </div>
+</section>
