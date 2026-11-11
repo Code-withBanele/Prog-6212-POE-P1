@@ -66,7 +66,6 @@ public sealed class ParticipantController(IHttpClientFactory clients) : Controll
         return RedirectToAction(nameof(Profile));
     }
 
-    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> ProfilePicture(string participantId)
     {
@@ -74,6 +73,7 @@ public sealed class ParticipantController(IHttpClientFactory clients) : Controll
             $"api/MyRaces/profile-picture/{Uri.EscapeDataString(participantId)}");
         if (!response.IsSuccessStatusCode) return NotFound();
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        Response.Headers.CacheControl = "no-cache";
         return File(await response.Content.ReadAsByteArrayAsync(), contentType);
     }
 
