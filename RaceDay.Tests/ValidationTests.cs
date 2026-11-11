@@ -105,6 +105,25 @@ public class ValidationTests
         Assert.Empty(Validate(model));
     }
 
+    [Fact]
+    public void OrganiserEventViewModel_RequiresAtLeastOneCategory()
+    {
+        var model = new OrganiserEventViewModel
+        {
+            EventName = "East London 10K",
+            Description = "A community road race.",
+            EventDate = DateTime.Today.AddDays(30),
+            Location = "East London",
+            DistanceKm = 10,
+            EventType = "Run",
+            CategoryIds = [],
+            RouteId = "route-1"
+        };
+
+        Assert.Contains(Validate(model),
+            result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.CategoryIds)));
+    }
+
     [Theory]
     [InlineData("Swim")]
     [InlineData("run")]
