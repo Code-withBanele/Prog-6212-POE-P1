@@ -105,3 +105,4 @@ public class RaceDayContext : DbContext
             .IsUnique().HasFilter("[ParticipantsId] IS NOT NULL");
     }
 }
+
