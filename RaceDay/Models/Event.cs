@@ -43,6 +43,12 @@ public class Event
     [Required, MaxLength(50)]
     public string OrganisersId { get; set; } = string.Empty;
 
+    [MaxLength(200)]
+    public string? BannerBlobName { get; set; }
+
+    [NotMapped]
+    public string? BannerUrl { get; set; }
+
     public Category? Category { get; set; }
     public Route? Route { get; set; }
     public Organiser? Organiser { get; set; }
