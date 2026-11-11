@@ -46,10 +46,12 @@ namespace RaceDay.Migrations
             modelBuilder.Entity("RaceDay.Models.EventCategory", b =>
                 {
                     b.Property<string>("EventsId")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("CategoriesId")
+                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
