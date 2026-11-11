@@ -5,6 +5,7 @@ using RaceDay.Data;
 using RaceDay.Models;
 using System.Security.Claims;
 using RaceDay.DTOs;
+using RaceDay.Services;
 
 namespace RaceDay.Controllers;
 
@@ -14,8 +15,13 @@ namespace RaceDay.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly RaceDayContext _context;
+    private readonly IBlobStorageService _blobStorage;
 
-    public EventsController(RaceDayContext context) => _context = context;
+    public EventsController(RaceDayContext context, IBlobStorageService blobStorage)
+    {
+        _context = context;
+        _blobStorage = blobStorage;
+    }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Event>>> GetAll()
@@ -24,7 +30,10 @@ public class EventsController : ControllerBase
             .Include(e => e.EventCategories)
             .ToListAsync();
         foreach (var item in events)
+        {
             item.CategoryIds = item.EventCategories.Select(ec => ec.CategoriesId).ToList();
+            item.BannerUrl = item.BannerBlobName is null ? null : $"{Request.Scheme}://{Request.Host}/api/Events/{item.EventsId}/banner";
+        }
         return events;
     }
 
@@ -36,6 +45,7 @@ public class EventsController : ControllerBase
             .SingleOrDefaultAsync(e => e.EventsId == id);
         if (item is null) return NotFound();
         item.CategoryIds = item.EventCategories.Select(ec => ec.CategoriesId).ToList();
+        item.BannerUrl = item.BannerBlobName is null ? null : $"{Request.Scheme}://{Request.Host}/api/Events/{item.EventsId}/banner";
         return item;
     }
 
@@ -143,6 +153,63 @@ public class EventsController : ControllerBase
             return BadRequest("The event could not be updated. Check its selected categories and route.");
         }
         return NoContent();
+    }
+
+    [HttpPost("{id}/banner")]
+    [Authorize(Roles = "Organiser")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<IActionResult> UploadBanner(string id, IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest("Choose an image to upload.");
+        if (file.Length > 5 * 1024 * 1024)
+            return BadRequest("The image must be 5 MB or smaller.");
+
+        var contentType = file.ContentType.ToLowerInvariant();
+        if (contentType is not ("image/jpeg" or "image/png" or "image/webp"))
+            return BadRequest("Only JPG, PNG and WebP images are supported.");
+
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+
+        var item = await _context.Events.SingleOrDefaultAsync(e =>
+            e.EventsId == id && e.OrganisersId == organiserId);
+        if (item is null) return NotFound();
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            item.BannerBlobName = await _blobStorage.UploadAsync(
+                stream, file.FileName, contentType, "event-banners");
+            await _context.SaveChangesAsync();
+            return Ok(new { imageUrl = $"{Request.Scheme}://{Request.Host}/api/Events/{id}/banner" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
+        }
+    }
+
+    [HttpGet("{id}/banner")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBanner(string id)
+    {
+        var blobName = await _context.Events.AsNoTracking()
+            .Where(e => e.EventsId == id)
+            .Select(e => e.BannerBlobName)
+            .SingleOrDefaultAsync();
+        if (string.IsNullOrWhiteSpace(blobName)) return NotFound();
+
+        try
+        {
+            var image = await _blobStorage.OpenReadAsync(blobName, "event-banners");
+            return image is null ? NotFound() : File(image.Value.Content, image.Value.ContentType);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
