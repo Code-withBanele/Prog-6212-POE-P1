@@ -60,7 +60,7 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             EventDate = item.EventDate, Location = item.Location,
             DistanceKm = item.DistanceKm, EventType = item.EventType,
             CategoryIds = item.CategoryIds.Count > 0 ? item.CategoryIds : [item.CategoriesId], RouteId = item.RouteId,
-            BannerUrl = item.BannerUrl
+            BannerUrl = Url.Action("Banner", "Events", new { id })
         };
         await LoadEventOptions(model);
         ViewBag.EventId = id;
