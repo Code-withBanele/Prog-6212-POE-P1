@@ -28,7 +28,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("OrganiserOnly", policy => policy.RequireRole("Organiser"));
     options.AddPolicy("ParticipantOnly", policy => policy.RequireRole("Participant"));
 });
-builder.Services.AddHttpClient<RaceDayApiClient>(client =>
+builder.Services.AddHttpClient("RaceDayApi", client =>
 {
     var baseUrl = builder.Configuration["RaceDayApi:BaseUrl"]
         ?? "https://localhost:7192/";
