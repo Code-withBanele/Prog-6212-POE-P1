@@ -30,6 +30,9 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__RaceDayConnection: "Server=raceday-db,1433;Database=RaceDayApiDB;User Id=sa;Password=${SA_PASSWORD:?Set SA_PASSWORD in your .env file};Encrypt=True;TrustServerCertificate=True"
+      Jwt__Secret: ${JWT_SECRET:?Set JWT_SECRET in your .env file}
+      Jwt__Issuer: RaceDayApi
+      Jwt__Audience: RaceDayClient
     depends_on:
       raceday-db:
         condition: service_healthy
