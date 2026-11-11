@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RaceDay.Web.ViewModels;
 
 namespace RaceDay.Web.Controllers;
@@ -16,6 +17,16 @@ public sealed class EventsController(IHttpClientFactory clients) : Controller
         if (!string.IsNullOrWhiteSpace(token))
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> Banner(string id)
+    {
+        using var response = await Api().GetAsync($"api/Events/{Uri.EscapeDataString(id)}/banner");
+        if (!response.IsSuccessStatusCode) return NotFound();
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+        return File(await response.Content.ReadAsByteArrayAsync(), contentType);
     }
 
     [Authorize(Roles = "Participant")]
@@ -39,6 +50,8 @@ public sealed class EventsController(IHttpClientFactory clients) : Controller
         if (!eventResponse.IsSuccessStatusCode) return NotFound();
         var item = await eventResponse.Content.ReadFromJsonAsync<EventListItemViewModel>();
         if (item is null) return NotFound();
+
+        item.BannerUrl = Url.Action(nameof(Banner), new { id = item.EventsId });
 
         using var categoryResponse = await client.GetAsync("api/Categories");
         var categories = categoryResponse.IsSuccessStatusCode
