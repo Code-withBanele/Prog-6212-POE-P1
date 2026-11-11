@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using RaceDay.DTOs;
 using RaceDay.Web.ViewModels;
+using Xunit;
 
 namespace RaceDay.Tests;
 
