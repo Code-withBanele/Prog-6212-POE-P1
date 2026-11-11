@@ -29,3 +29,15 @@ public sealed class EventDetailsViewModel
     public EventListItemViewModel Event { get; set; } = new();
     public List<CategoryOptionViewModel> Categories { get; set; } = [];
 }
+
+
+public sealed class EventSearchViewModel
+{
+    public List<EventListItemViewModel> Events { get; set; } = [];
+    public string? Search { get; set; }
+    public string? EventType { get; set; }
+    public decimal? MinDistance { get; set; }
+    public decimal? MaxDistance { get; set; }
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
+}
