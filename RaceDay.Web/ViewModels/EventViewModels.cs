@@ -14,6 +14,7 @@ public sealed class EventListItemViewModel
     public string RouteId { get; set; } = "";
     public string TeamId { get; set; } = "";
     public string OrganisersId { get; set; } = "";
+    public string? BannerUrl { get; set; }
 }
 
 public sealed class CategoryOptionViewModel
