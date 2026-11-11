@@ -204,7 +204,7 @@ public class EventsController : ControllerBase
         try
         {
             var image = await _blobStorage.OpenReadAsync(blobName, "event-banners");
-            return image is null ? NotFound() : File(image.Value.Content, image.Value.ContentType);
+            if (image is null) return NotFound();\n            Response.Headers.CacheControl = "no-cache";\n            return File(image.Value.Content, image.Value.ContentType);
         }
         catch (InvalidOperationException ex)
         {
