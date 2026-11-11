@@ -164,6 +164,28 @@ public class ValidationTests
         Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.DistanceKm)));
     }
 
+    [Theory]
+    [InlineData(1, "1st of 120")]
+    [InlineData(2, "2nd of 120")]
+    [InlineData(3, "3rd of 120")]
+    [InlineData(4, "4th of 120")]
+    [InlineData(11, "11th of 120")]
+    [InlineData(12, "12th of 120")]
+    [InlineData(13, "13th of 120")]
+    [InlineData(21, "21st of 120")]
+    [InlineData(22, "22nd of 120")]
+    [InlineData(23, "23rd of 120")]
+    public void MyRaceViewModel_FormatsOrdinalFinishingPosition(int position, string expected)
+    {
+        var model = new MyRaceViewModel
+        {
+            FinishPosition = position,
+            EntrantCount = 120
+        };
+
+        Assert.Equal(expected, model.FinishPositionSummary);
+    }
+
     private static List<ValidationResult> Validate(object model)
     {
         var results = new List<ValidationResult>();
