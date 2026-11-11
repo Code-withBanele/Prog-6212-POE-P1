@@ -101,7 +101,6 @@ public class ValidationTests
             EventType = "Run",
             CategoriesId = "category-1",
             RouteId = "route-1",
-            TeamId = "team-1"
         };
         Assert.Empty(Validate(model));
     }
