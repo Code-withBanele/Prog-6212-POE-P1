@@ -1,0 +1,33 @@
+name: RaceDay Part 3 CI
+
+on:
+  push:
+    branches:
+      - part-3-mvc
+  pull_request:
+    branches:
+      - part-3-mvc
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore API
+        run: dotnet restore RaceDay/RaceDay.csproj
+
+      - name: Build API
+        run: dotnet build RaceDay/RaceDay.csproj --configuration Release --no-restore
+
+      - name: Restore MVC
+        run: dotnet restore RaceDay.Web/RaceDay.Web.csproj
+
+      - name: Build MVC
+        run: dotnet build RaceDay.Web/RaceDay.Web.csproj --configuration Release --no-restore
