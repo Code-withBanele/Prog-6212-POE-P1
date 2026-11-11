@@ -14,7 +14,18 @@ public sealed class MyRaceViewModel
     public string CategoryName { get; set; } = "";
     public DateTime? FinishTime { get; set; }
     public int? FinishPosition { get; set; }
+    public int EntrantCount { get; set; }
+    public string? FinishPositionSummary => FinishPosition.HasValue
+        ? $"{FinishPosition.Value}{OrdinalSuffix(FinishPosition.Value)} of {EntrantCount}"
+        : null;
     public string Status { get; set; } = "";
+
+    private static string OrdinalSuffix(int value)
+    {
+        var lastTwo = value % 100;
+        if (lastTwo is 11 or 12 or 13) return "th";
+        return value % 10 switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };
+    }
 }
 
 public sealed class ParticipantProfileViewModel
