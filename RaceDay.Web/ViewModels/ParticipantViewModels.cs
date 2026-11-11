@@ -20,6 +20,8 @@ public sealed class MyRaceViewModel
 public sealed class ParticipantProfileViewModel
 {
     public string ParticipantsId { get; set; } = "";
+    public string? ProfilePictureUrl { get; set; }
+    public IFormFile? ProfilePicture { get; set; }
 
     [Required, MaxLength(100)]
     public string Name { get; set; } = "";
