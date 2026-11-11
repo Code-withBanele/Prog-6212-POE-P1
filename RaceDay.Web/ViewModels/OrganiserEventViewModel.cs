@@ -22,8 +22,8 @@ public sealed class OrganiserEventViewModel
     [Required, RegularExpression("^(Run|Walk|Cycle)$")]
     public string EventType { get; set; } = "Run";
 
-    [Required]
-    public string CategoriesId { get; set; } = "";
+    [Required, MinLength(1, ErrorMessage = "Select at least one participant category.")]
+    public List<string> CategoryIds { get; set; } = [];
 
     [Required]
     public string RouteId { get; set; } = "";
