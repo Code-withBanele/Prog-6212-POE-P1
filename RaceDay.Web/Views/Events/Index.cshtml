@@ -1,0 +1,11 @@
+@model List<EventListItemViewModel>
+@{ ViewData["Title"] = "Find events"; }
+<div class="d-flex justify-content-between align-items-end mb-4"><div><p class="text-warning fw-bold text-uppercase mb-1">Find your next challenge</p><h1 class="fw-bold">Upcoming events</h1><p class="text-muted mb-0">Explore races and choose your next finish line.</p></div></div>
+@if (TempData["ErrorMessage"] is string error) { <div class="alert alert-warning">@error</div> }
+@if (!Model.Any()) { <div class="card card-body"><p class="mb-0 text-muted">No events are currently available.</p></div> }
+<div class="row g-3">
+@foreach (var item in Model.Where(e => e.EventDate >= DateTime.Today))
+{
+<div class="col-md-6 col-xl-4"><div class="card h-100 shadow-sm border-0"><div class="card-body d-flex flex-column"><span class="badge text-bg-dark align-self-start mb-3">@item.EventType · @item.DistanceKm km</span><h2 class="h5 fw-bold">@item.EventName</h2><p class="text-muted small">@item.Description</p><p class="small mb-1"><strong>Date:</strong> @item.EventDate.ToString("dd MMM yyyy HH:mm")</p><p class="small"><strong>Location:</strong> @item.Location</p><a class="btn btn-warning mt-auto fw-semibold" asp-action="Details" asp-route-id="@item.EventsId">View event</a></div></div></div>
+}
+</div>
