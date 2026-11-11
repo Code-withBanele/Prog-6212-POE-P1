@@ -33,6 +33,17 @@ public class EventsController : ControllerBase
     [Authorize(Roles = "Organiser")]
     public async Task<ActionResult<Event>> Create(Event item)
     {
+        var accountId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(accountId))
+            return Unauthorized();
+
+        var account = await _context.UserAccounts
+            .SingleOrDefaultAsync(u => u.UserAccountId == accountId);
+        if (account?.OrganisersId is null)
+            return Forbid();
+
+        // The organiser identity comes from the authenticated account, never the request body.
+        item.OrganisersId = account.OrganisersId;
         _context.Events.Add(item);
 
         try
@@ -42,7 +53,7 @@ public class EventsController : ControllerBase
         catch (DbUpdateException)
         {
             return BadRequest(
-                "The event could not be saved. Check its category, route and organiser IDs.");
+                "The event could not be saved. Check its category, route and team IDs.");
         }
 
         return CreatedAtAction(
