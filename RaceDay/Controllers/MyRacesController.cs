@@ -109,19 +109,14 @@ public sealed class MyRacesController(RaceDayContext context, IBlobStorageServic
         }
     }
 
-    [HttpGet("profile-picture")]
+    [HttpGet("profile-picture/{participantId}")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetProfilePicture()
+    public async Task<IActionResult> GetProfilePicture(string participantId)
     {
         var blobName = await context.Participants.AsNoTracking()
-            .Where(p => p.ProfilePictureBlobName != null)
-            .Where(p => context.UserAccounts.Any(a => a.ParticipantsId == p.ParticipantsId
-                && a.UserAccountId == User.FindFirstValue(ClaimTypes.NameIdentifier)))
+            .Where(p => p.ParticipantsId == participantId)
             .Select(p => p.ProfilePictureBlobName)
             .SingleOrDefaultAsync();
-
-        // Public delivery uses an opaque participant-owned image route. Resolve the owner
-        // from the authenticated profile URL's participant ID in the route-less query above.
         if (string.IsNullOrWhiteSpace(blobName)) return NotFound();
 
         try
