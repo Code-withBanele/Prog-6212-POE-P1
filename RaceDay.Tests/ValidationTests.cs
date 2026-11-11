@@ -99,7 +99,7 @@ public class ValidationTests
             Location = "East London",
             DistanceKm = 10,
             EventType = "Run",
-            CategoriesId = "category-1",
+            CategoryIds = ["category-1"],
             RouteId = "route-1",
         };
         Assert.Empty(Validate(model));
@@ -119,7 +119,7 @@ public class ValidationTests
             Location = "East London",
             DistanceKm = 10,
             EventType = eventType,
-            CategoriesId = "category-1",
+            CategoryIds = ["category-1"],
             RouteId = "route-1",
         };
         Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.EventType)));
@@ -139,7 +139,7 @@ public class ValidationTests
             Location = "East London",
             DistanceKm = distance,
             EventType = "Run",
-            CategoriesId = "category-1",
+            CategoryIds = ["category-1"],
             RouteId = "route-1",
         };
         Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.DistanceKm)));
