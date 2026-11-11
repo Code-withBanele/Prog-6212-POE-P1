@@ -111,8 +111,15 @@ public class EventsController : ControllerBase
         existing.TeamId = item.TeamId;
         existing.CategoriesId = categoryIds[0];
 
-        _context.EventCategories.RemoveRange(existing.EventCategories);
-        foreach (var categoryId in categoryIds)
+        var categoriesToRemove = existing.EventCategories
+            .Where(ec => !categoryIds.Contains(ec.CategoriesId))
+            .ToList();
+        _context.EventCategories.RemoveRange(categoriesToRemove);
+
+        var existingCategoryIds = existing.EventCategories
+            .Select(ec => ec.CategoriesId)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var categoryId in categoryIds.Where(id => !existingCategoryIds.Contains(id)))
             existing.EventCategories.Add(new EventCategory
             {
                 EventsId = existing.EventsId,
