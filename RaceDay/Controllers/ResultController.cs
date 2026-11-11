@@ -16,9 +16,47 @@ public class ResultsController : ControllerBase
     public ResultsController(RaceDayContext context) =>
         _context = context;
 
+    private async Task<string?> GetCurrentOrganiserId()
+    {
+        var accountId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(accountId)) return null;
+        var account = await _context.UserAccounts.AsNoTracking()
+            .SingleOrDefaultAsync(u => u.UserAccountId == accountId);
+        return account?.OrganisersId;
+    }
+
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Result>>> GetAll() =>
-        await _context.Results.AsNoTracking().ToListAsync();
+    public async Task<ActionResult<IEnumerable<Result>>> GetAll()
+    {
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+        return await _context.Results.AsNoTracking()
+            .Where(r => r.Event != null && r.Event.OrganisersId == organiserId)
+            .ToListAsync();
+    }
+
+    [HttpGet("event/{eventId}")]
+    public async Task<IActionResult> GetForEvent(string eventId)
+    {
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+
+        var ownsEvent = await _context.Events.AnyAsync(e =>
+            e.EventsId == eventId && e.OrganisersId == organiserId);
+        if (!ownsEvent) return NotFound();
+
+        var rows = await _context.Results.AsNoTracking()
+            .Where(r => r.EventsId == eventId)
+            .Select(r => new
+            {
+                r.ResultsId, r.EventsId, r.ParticipantsId, r.CategoriesId,
+                r.FinishTime, r.FinishPosition,
+                ParticipantName = r.Participant == null ? "Participant" :
+                    r.Participant.Name + " " + r.Participant.Surname,
+                CategoryName = r.Category == null ? "Category" : r.Category.Name
+            }).ToListAsync();
+        return Ok(rows);
+    }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Result>> GetById(string id)
@@ -30,6 +68,12 @@ public class ResultsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Result>> Create(Result item)
     {
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+        var ownsEvent = await _context.Events.AnyAsync(e =>
+            e.EventsId == item.EventsId && e.OrganisersId == organiserId);
+        if (!ownsEvent) return Forbid();
+
         _context.Results.Add(item);
 
         try
@@ -51,14 +95,18 @@ public class ResultsController : ControllerBase
     {
         if (id != item.ResultsId) return BadRequest();
 
-        var existing = await _context.Results.FindAsync(id);
-        if (existing is null) return NotFound();
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+        var existing = await _context.Results
+            .Include(r => r.Event)
+            .SingleOrDefaultAsync(r => r.ResultsId == id);
+        if (existing?.Event is null || existing.Event.OrganisersId != organiserId)
+            return NotFound();
 
-        existing.EventsId = item.EventsId;
-        existing.ParticipantsId = item.ParticipantsId;
+        // Organisers may record results, but cannot move an enrolment to another
+        // event or participant through an update request.
         existing.FinishTime = item.FinishTime;
         existing.FinishPosition = item.FinishPosition;
-        existing.CategoriesId = item.CategoriesId;
 
         try
         {
@@ -76,8 +124,12 @@ public class ResultsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(string id)
     {
-        var item = await _context.Results.FindAsync(id);
-        if (item is null) return NotFound();
+        var organiserId = await GetCurrentOrganiserId();
+        if (organiserId is null) return Forbid();
+        var item = await _context.Results.Include(r => r.Event)
+            .SingleOrDefaultAsync(r => r.ResultsId == id);
+        if (item?.Event is null || item.Event.OrganisersId != organiserId)
+            return NotFound();
 
         _context.Results.Remove(item);
         await _context.SaveChangesAsync();
