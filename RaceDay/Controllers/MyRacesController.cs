@@ -44,9 +44,11 @@ public sealed class MyRacesController(RaceDayContext context, IBlobStorageServic
                 CategoryName = x.Category!.Name,
                 x.FinishTime,
                 x.FinishPosition,
+                EntrantCount = context.Results.Count(other =>
+                    other.EventsId == x.EventsId && other.CategoriesId == x.CategoriesId),
                 Status = x.FinishTime == null ? "Enrolled" : "Completed"
             })
-            .OrderBy(x => x.EventDate)
+            .OrderByDescending(x => x.EventDate)
             .ToListAsync();
 
         return Ok(races);
