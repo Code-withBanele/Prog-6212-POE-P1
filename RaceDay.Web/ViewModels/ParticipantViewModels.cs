@@ -24,7 +24,7 @@ public sealed class MyRaceViewModel
     {
         var lastTwo = value % 100;
         if (lastTwo is 11 or 12 or 13) return "th";
-        return value % 10 switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };
+        return (value % 10) switch { 1 => "st", 2 => "nd", 3 => "rd", _ => "th" };
     }
 }
 
