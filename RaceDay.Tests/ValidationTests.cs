@@ -87,6 +87,67 @@ public class ValidationTests
         Assert.Contains(errors, result => result.MemberNames.Contains(nameof(ParticipantProfileViewModel.Age)));
     }
 
+
+    [Fact]
+    public void OrganiserEventViewModel_AcceptsValidEventDetails()
+    {
+        var model = new OrganiserEventViewModel
+        {
+            EventName = "East London 10K",
+            Description = "A community road race.",
+            EventDate = DateTime.Today.AddDays(30),
+            Location = "East London",
+            DistanceKm = 10,
+            EventType = "Run",
+            CategoriesId = "category-1",
+            RouteId = "route-1",
+            TeamId = "team-1"
+        };
+        Assert.Empty(Validate(model));
+    }
+
+    [Theory]
+    [InlineData("Swim")]
+    [InlineData("run")]
+    [InlineData("")]
+    public void OrganiserEventViewModel_RejectsUnsupportedEventTypes(string eventType)
+    {
+        var model = new OrganiserEventViewModel
+        {
+            EventName = "East London 10K",
+            Description = "A community road race.",
+            EventDate = DateTime.Today.AddDays(30),
+            Location = "East London",
+            DistanceKm = 10,
+            EventType = eventType,
+            CategoriesId = "category-1",
+            RouteId = "route-1",
+            TeamId = "team-1"
+        };
+        Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.EventType)));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    [InlineData(1001)]
+    public void OrganiserEventViewModel_RejectsInvalidDistances(decimal distance)
+    {
+        var model = new OrganiserEventViewModel
+        {
+            EventName = "East London 10K",
+            Description = "A community road race.",
+            EventDate = DateTime.Today.AddDays(30),
+            Location = "East London",
+            DistanceKm = distance,
+            EventType = "Run",
+            CategoriesId = "category-1",
+            RouteId = "route-1",
+            TeamId = "team-1"
+        };
+        Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.DistanceKm)));
+    }
+
     private static List<ValidationResult> Validate(object model)
     {
         var results = new List<ValidationResult>();
