@@ -13,6 +13,12 @@ public sealed class LoginViewModel
 
 public sealed class RegisterViewModel
 {
+    [Required, MaxLength(100)]
+    public string Name { get; set; } = string.Empty;
+
+    [Required, MaxLength(100)]
+    public string Surname { get; set; } = string.Empty;
+
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
 
@@ -22,6 +28,12 @@ public sealed class RegisterViewModel
     [Required, Compare(nameof(Password)), DataType(DataType.Password)]
     public string ConfirmPassword { get; set; } = string.Empty;
 
-    [Required]
+    [Required, RegularExpression("^(Organiser|Participant)$")]
     public string Role { get; set; } = "Participant";
+
+    [RegularExpression("^[MFO]$")]
+    public string Gender { get; set; } = "O";
+
+    [Range(1, 120)]
+    public int? Age { get; set; }
 }
