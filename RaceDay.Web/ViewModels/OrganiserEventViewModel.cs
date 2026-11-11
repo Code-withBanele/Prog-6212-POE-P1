@@ -30,4 +30,6 @@ public sealed class OrganiserEventViewModel
 
     public List<CategoryOptionViewModel> Categories { get; set; } = [];
     public List<RouteOptionViewModel> Routes { get; set; } = [];
+    public IFormFile? BannerImage { get; set; }
+    public string? BannerUrl { get; set; }
 }
