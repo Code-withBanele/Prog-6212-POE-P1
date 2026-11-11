@@ -10,6 +10,7 @@ public sealed class EventListItemViewModel
     public decimal DistanceKm { get; set; }
     public string EventType { get; set; } = "";
     public string CategoriesId { get; set; } = "";
+    public List<string> CategoryIds { get; set; } = [];
     public string RouteId { get; set; } = "";
     public string TeamId { get; set; } = "";
     public string OrganisersId { get; set; } = "";
