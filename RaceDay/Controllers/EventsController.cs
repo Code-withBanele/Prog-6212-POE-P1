@@ -109,14 +109,25 @@ public class EventsController : ControllerBase
         existing.EventType = item.EventType;
         existing.RouteId = item.RouteId;
         existing.TeamId = item.TeamId;
+        var categoriesBeingRemoved = existing.EventCategories
+            .Where(ec => !categoryIds.Contains(ec.CategoriesId))
+            .Select(ec => ec.CategoriesId)
+            .ToList();
+
+        var hasEnrolmentsInRemovedCategories = await _context.Results.AnyAsync(r =>
+            r.EventsId == id && categoriesBeingRemoved.Contains(r.CategoriesId));
+        if (hasEnrolmentsInRemovedCategories)
+            return Conflict("A category cannot be removed while participants are enrolled in it.");
+
         existing.CategoriesId = categoryIds[0];
 
         var categoriesToRemove = existing.EventCategories
-            .Where(ec => !categoryIds.Contains(ec.CategoriesId))
+            .Where(ec => categoriesBeingRemoved.Contains(ec.CategoriesId))
             .ToList();
         _context.EventCategories.RemoveRange(categoriesToRemove);
 
         var existingCategoryIds = existing.EventCategories
+            .Where(ec => categoryIds.Contains(ec.CategoriesId))
             .Select(ec => ec.CategoriesId)
             .ToHashSet(StringComparer.Ordinal);
         foreach (var categoryId in categoryIds.Where(id => !existingCategoryIds.Contains(id)))
