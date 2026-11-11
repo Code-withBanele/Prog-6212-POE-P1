@@ -1,0 +1,1 @@
+:root{--race-yellow:#ffbd2e;--race-ink:#17191d}body{min-height:100vh;display:flex;flex-direction:column;background:#f6f7f9}main{flex:1}.hero-panel{background:radial-gradient(circle at 85% 20%,#555b64 0,transparent 35%),linear-gradient(120deg,#17191d,#303640)}.btn-warning{background:var(--race-yellow);border-color:var(--race-yellow)}.card{border-radius:1rem}
