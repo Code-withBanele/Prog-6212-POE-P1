@@ -121,7 +121,6 @@ public class ValidationTests
             EventType = eventType,
             CategoriesId = "category-1",
             RouteId = "route-1",
-            TeamId = "team-1"
         };
         Assert.Contains(Validate(model), result => result.MemberNames.Contains(nameof(OrganiserEventViewModel.EventType)));
     }
