@@ -59,7 +59,8 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             EventName = item.EventName, Description = item.Description,
             EventDate = item.EventDate, Location = item.Location,
             DistanceKm = item.DistanceKm, EventType = item.EventType,
-            CategoryIds = item.CategoryIds.Count > 0 ? item.CategoryIds : [item.CategoriesId], RouteId = item.RouteId
+            CategoryIds = item.CategoryIds.Count > 0 ? item.CategoryIds : [item.CategoriesId], RouteId = item.RouteId,
+            BannerUrl = item.BannerUrl
         };
         await LoadEventOptions(model);
         ViewBag.EventId = id;
@@ -89,7 +90,10 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             ViewBag.EventId = id;
             return View(model);
         }
-        TempData["SuccessMessage"] = "Event details updated.";
+        if (model.BannerImage is not null && !await UploadBannerAsync(id, model.BannerImage))
+            TempData["ErrorMessage"] = "Event details were saved, but the banner upload failed. Check Azure Blob Storage configuration and try again.";
+        else
+            TempData["SuccessMessage"] = "Event details updated.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -184,7 +188,12 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
             return View(model);
         }
 
-        TempData["SuccessMessage"] = "Your event has been created.";
+        var createdEvent = await response.Content.ReadFromJsonAsync<EventListItemViewModel>();
+        if (model.BannerImage is not null && createdEvent is not null
+            && !await UploadBannerAsync(createdEvent.EventsId, model.BannerImage))
+            TempData["ErrorMessage"] = "The event was created, but its banner upload failed. Check Azure Blob Storage configuration and try again.";
+        else
+            TempData["SuccessMessage"] = "Your event has been created.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -208,6 +217,19 @@ public sealed class OrganiserController(IHttpClientFactory clients) : Controller
 
         TempData["SuccessMessage"] = "Route created. You can now select it when creating an event.";
         return RedirectToAction(nameof(Create));
+    }
+
+    private async Task<bool> UploadBannerAsync(string eventId, IFormFile file)
+    {
+        using var content = new MultipartFormDataContent();
+        await using var stream = file.OpenReadStream();
+        using var fileContent = new StreamContent(stream);
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+        content.Add(fileContent, "file", file.FileName);
+
+        using var response = await Api().PostAsync(
+            $"api/Events/{Uri.EscapeDataString(eventId)}/banner", content);
+        return response.IsSuccessStatusCode;
     }
 
     private async Task LoadEventOptions(OrganiserEventViewModel model)
