@@ -84,4 +84,4 @@ Open the MVC URL printed by the .NET CLI.
 - Event category and blob metadata database migrations are included.
 - GitHub Actions builds the API and MVC projects and runs the unit test project.
 
-Docker deployment and end-to-end verification against a configured Azure Storage account remain outstanding.
+Docker deployment instructions are in the repository-root README. A live deployment still requires the user to configure their SQL password, JWT secret and optional Azure Storage connection string in a local .env file.
