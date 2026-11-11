@@ -71,7 +71,7 @@ public sealed class MyRacesController(RaceDayContext context, IBlobStorageServic
             profile.Age,
             ProfilePictureUrl = profile.ProfilePictureBlobName is null
                 ? null
-                : $"{Request.Scheme}://{Request.Host}/api/MyRaces/profile-picture"
+                : $"{Request.Scheme}://{Request.Host}/api/MyRaces/profile-picture/${participantId}"
         });
     }
 
@@ -101,7 +101,7 @@ public sealed class MyRacesController(RaceDayContext context, IBlobStorageServic
             participant.ProfilePictureBlobName = await blobStorage.UploadAsync(
                 stream, file.FileName, contentType, "profile-pictures");
             await context.SaveChangesAsync();
-            return Ok(new { imageUrl = $"{Request.Scheme}://{Request.Host}/api/MyRaces/profile-picture" });
+            return Ok(new { imageUrl = $"{Request.Scheme}://{Request.Host}/api/MyRaces/profile-picture/${participantId}" });
         }
         catch (InvalidOperationException ex)
         {
