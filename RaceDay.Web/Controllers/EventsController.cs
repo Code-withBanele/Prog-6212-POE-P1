@@ -44,7 +44,7 @@ public sealed class EventsController(IHttpClientFactory clients) : Controller
         var categories = categoryResponse.IsSuccessStatusCode
             ? await categoryResponse.Content.ReadFromJsonAsync<List<CategoryOptionViewModel>>() ?? []
             : [];
-        return View(new EventDetailsViewModel { Event = item, Categories = categories });
+        return View(new EventDetailsViewModel { Event = item, Categories = categories.Where(c => item.CategoryIds.Contains(c.CategoriesId)).ToList() });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
