@@ -1,0 +1,15 @@
+@model EventDetailsViewModel
+@{ ViewData["Title"] = Model.Event.EventName; }
+<a asp-action="Index" class="text-decoration-none">&larr; All events</a>
+@if (TempData["ErrorMessage"] is string error) { <div class="alert alert-warning mt-3">@error</div> }
+@if (TempData["StatusMessage"] is string status) { <div class="alert alert-success mt-3">@status</div> }
+<div class="card border-0 shadow-sm mt-3"><div class="card-body p-4">
+<span class="badge text-bg-dark mb-3">@Model.Event.EventType · @Model.Event.DistanceKm km</span>
+<h1 class="display-5 fw-bold">@Model.Event.EventName</h1><p class="lead">@Model.Event.Description</p>
+<div class="row g-3 my-3"><div class="col-sm-6"><strong>When</strong><p>@Model.Event.EventDate.ToString("dddd, dd MMMM yyyy · HH:mm")</p></div><div class="col-sm-6"><strong>Where</strong><p>@Model.Event.Location</p></div></div>
+<hr/><h2 class="h5 fw-bold">Enrol in this event</h2>
+<form asp-action="Enrol" asp-route-id="@Model.Event.EventsId" method="post">
+<label class="form-label" for="categoriesId">Select your category</label>
+<select class="form-select mb-3" id="categoriesId" name="categoriesId" required><option value="">Choose a category</option>@foreach(var category in Model.Categories){<option value="@category.CategoriesId">@category.Name — @category.Description</option>}</select>
+<button class="btn btn-warning fw-bold">Confirm enrolment</button>
+</form></div></div>
