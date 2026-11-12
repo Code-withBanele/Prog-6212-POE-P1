@@ -7,7 +7,7 @@
 **Technology:** .NET 10, ASP.NET Core MVC, ASP.NET Core Web API, Entity Framework Core, SQL Server and Docker
 
 > **Submission branch:** `part-3-mvc`  
-> **Demonstration video:** **[INSERT UNLISTED YOUTUBE VIDEO URL HERE]**
+> **Demonstration video:** https://youtu.be/xzoxbWkSgLM
 
 ---
 
@@ -319,7 +319,7 @@ A successful CI run confirms the steps in that workflow completed for the commit
 
 ## 11. Troubleshooting
 
-| Issue | Suggested check |
+| Issue | Suggested check | KNOWN ISSUES
 |---|---|
 | Missing environment variables | Confirm that `.env` exists in the repository root and required values are populated. |
 | SQL Server does not become healthy | Inspect `docker compose logs raceday-db` and confirm Docker has sufficient memory. |
@@ -330,42 +330,15 @@ A successful CI run confirms the steps in that workflow completed for the commit
 | Image upload or retrieval fails | Check that the API has a valid Azure Storage connection string and that the storage account is reachable. |
 | Port is already in use | Stop the process using host port 8080, 8081 or 1433, or adjust the host-side port mapping. |
 
-## 12. Known configuration and deployment considerations
 
-- A fresh database may not contain the category and route records required for event creation. These records must be configured before creating the first event.
-- Azure Blob Storage functionality requires a valid storage connection string. The application can be started without it, but image operations will not be available.
-- Docker Compose is intended for local demonstration and development. A production deployment requires HTTPS, secure secret management, suitable cookie settings, protected database networking and production hosting configuration.
-- The MVC application accesses data through the API; it does not connect directly to SQL Server.
-
-## 13. Submission information
-
-| Item | Submission value |
-|---|---|
-| GitHub repository | https://github.com/Code-withBanele/Prog-6212-POE-P1 |
-| Submission branch | `part-3-mvc` |
-| Current branch head | [View latest commit on `part-3-mvc`](https://github.com/Code-withBanele/Prog-6212-POE-P1/commits/part-3-mvc) |
-| Demonstration video URL | **[PASTE UNLISTED YOUTUBE URL HERE]** |
-| CI evidence | https://github.com/Code-withBanele/Prog-6212-POE-P1/actions/runs/43203480536 |
-
-### Final LMS submission checklist
-
-- [ ] Confirm the official assessment brief's required submission format.
-- [ ] Confirm the repository is accessible to the assessor.
-- [ ] Confirm the `part-3-mvc` branch is the branch being assessed.
-- [ ] Upload any additional files explicitly required by the assessment brief.
-- [ ] Record the demonstration using the accompanying script.
-- [ ] Upload the video as Unlisted (if permitted by the institution).
-- [ ] Replace the video URL placeholder above with the final video link.
-- [ ] Include the same video URL in the LMS submission field, if one is provided.
-- [ ] Keep a copy of the final submission details.
 
 ---
 
 ## 14. Demonstration video
 
 **Video title:** RaceDay — Programming 2B POE Part 3 Demonstration  
-**Video URL:** [INSERT UNLISTED YOUTUBE URL HERE]  
-**Suggested duration:** 8–10 minutes  
-**Script:** [docs/VIDEO-DEMONSTRATION-SCRIPT.md](docs/VIDEO-DEMONSTRATION-SCRIPT.md)
+**Video URL:** **https://youtu.be/xzoxbWkSgLM** 
 
-The demonstration should explain the system architecture and show the application from both organiser and participant perspectives. It should also show the repository, automated workflow and Docker deployment evidence. Do not show secrets, passwords, access tokens or private connection strings in the recording.
+
+
+
