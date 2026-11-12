@@ -299,7 +299,7 @@ The MVC API base URL must point to the running API address. See `RaceDay.Web/REA
 
 The GitHub Actions workflow is located at:
 
-` .github/workflows/raceday-part3.yml `
+`.github/workflows/raceday-part3.yml`
 
 It is triggered by pushes and pull requests targeting `part-3-mvc`. The workflow:
 
