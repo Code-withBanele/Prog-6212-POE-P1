@@ -343,7 +343,7 @@ A successful CI run confirms the steps in that workflow completed for the commit
 |---|---|
 | GitHub repository | https://github.com/Code-withBanele/Prog-6212-POE-P1 |
 | Submission branch | `part-3-mvc` |
-| Latest Part 3 commit | `235e81c0a8a97066a6e4e95b92e57b47d8766dba` |
+| Current branch head | [View latest commit on `part-3-mvc`](https://github.com/Code-withBanele/Prog-6212-POE-P1/commits/part-3-mvc) |
 | Demonstration video URL | **[PASTE UNLISTED YOUTUBE URL HERE]** |
 | CI evidence | https://github.com/Code-withBanele/Prog-6212-POE-P1/actions/runs/43203480536 |
 
